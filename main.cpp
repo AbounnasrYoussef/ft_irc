@@ -3,6 +3,15 @@
 
 int main() {
 
+	// socket   ==> create socket 
+	// bind to a port  // htons() >> little endian and big endian
+	// lisen()  ==> katwajed server bach y9bel clients
+	// accept() ==> accept clients
+
+	// poll() ==> to handl multiple clients  //use struct pollfd{int fd; short events; short revents;}
+
+
+
 	// struct pollfd fds[MAX_CLIENTS];
 
 	struct sockaddr_in add;

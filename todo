@@ -8,3 +8,11 @@
 | `read()` 		| Reads data from client		| When `client_fd` has POLLIN 	|
 | `write()` 	| Sends data to client			| After processing message 		|
 | `close()` 	| Closes connection				| When client disconnects		|
+
+
+htons()
+===================
+ ==>	PC dyalk kaykhdem b little endian
+
+ ==>	network kaykhdem b big endian
+===================
