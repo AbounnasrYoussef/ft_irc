@@ -17,17 +17,17 @@
 int main() {
 	// 1. Create server socket
 	int MAX_CLIENTS = 100;
-	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	int server_fd = socket(AF_INET, SOCK_STREAM, 0); // buffering tcp create
 
-	// 2. Bind to port
-	struct sockaddr_in address;
+	// 2. Bind to port 
+	struct sockaddr_in address;   /// socket(ip:port) for this process 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(6667);
 	bind(server_fd, (struct sockaddr*)&address, sizeof(address));
 	
 	// 3. Start listening
-	listen(server_fd, 3);
+	listen(server_fd, 3); // am ready to accept connections (work) (10.50.20.7:6667)
 	
 	// 4. Set up poll
 	struct pollfd fds[MAX_CLIENTS];
