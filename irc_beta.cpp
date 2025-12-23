@@ -14,24 +14,7 @@
 
 // ❌ khasso limits checks
 
-void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
-{
-	// Close the connection
-	close(fds[index].fd);
-	
-	// Delete the Client object
-	delete clients[index];
-	clients[index] = NULL;
-	
-	// Shift both arrays
-	for (int i = index; i < num_fds - 1; i++) {
-		fds[i] = fds[i + 1];
-		clients[i] = clients[i + 1];
-	}
-	
-	// Decrease count
-	num_fds--;
-}
+
 int main() {
 	// 1. Create server socket
 	int MAX_CLIENTS = 100;
@@ -54,6 +37,7 @@ int main() {
 	int num_fds = 1;
 	
 	// 5. Main loop
+	Client* clients[MAX_CLIENTS];
 	while (true)
 	{
 		// ===============================================================
@@ -85,8 +69,17 @@ int main() {
 					char buffer[1024];
 					int bytes = read(fds[i].fd, buffer, 1024);
 					
-					if (bytes <= 0) {
+					if (bytes == 0)
+					{
 						// Client disconnected
+						write(fds[i].fd, "Client is diconnected Goodbye!\n", 9);
+						removeClient(fds, clients, num_fds, i);
+						continue;
+					}
+
+					if (bytes == -1) {
+						// Error reading - close connection
+						write(fds[i].fd, "Error reading data. Closing connection.\n", 41);
 						close(fds[i].fd);
 						// TODO: Remove from array
 					} else {
