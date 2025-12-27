@@ -4,6 +4,7 @@
 
 // void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
 
+bool massage_complet(std::string buffer);
 class Client {
 	private:
 		int _fd;                    // Client file descriptor
@@ -34,7 +35,7 @@ class Client {
 		void setRegistered(bool reg);
 		
 		// Buffer management
-		void appendBuffer(std::string data);
+		void appendBuffer(std::string const data);
 		void clearBuffer();
 };
 

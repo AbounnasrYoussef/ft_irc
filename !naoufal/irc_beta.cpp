@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <poll.h>
 #include <stdlib.h>
-#include "includes/Client.hpp"
+#include "Client.hpp"
 // ✔️ khaddam logic dyalo s7i7
 
 // ✔️ multi-client b poll
@@ -77,56 +77,30 @@ int main() {
 				// Add new client to our monitoring list
 				fds[num_fds].fd = client_fd;
 				fds[num_fds].events = POLLIN;
-				clients[num_fds] = new Client(client_fd);
 				num_fds++; // add to array
-				// crate new client in arr of class
 			}
 			
 			// ==============================
 			// Check all connected clients for messages
 			for (int i = 1; i < num_fds; i++) {
 				if (fds[i].revents & POLLIN) {
-					char buffer[512];
-					int bytes = read(fds[i].fd, buffer, 512);
-					buffer[bytes] = '\0';
-
+					char buffer[1024];
+					int bytes = read(fds[i].fd, buffer, 1024);
+					
 					if (bytes == 0)
 					{
 						// Client disconnected
-						
 						write(fds[i].fd, "Client is diconnected Goodbye!\n", 9);
 						removeClient(fds, clients, num_fds, i);
 						continue;
 					}
 
-					if (bytes == -1)
-					{
+					if (bytes == -1) {
 						// Error reading - close connection
-						write(2, "Error reading data. Closing connection.\n", 41);
+						write(fds[i].fd, "Error reading data. Closing connection.\n", 41);
 						close(fds[i].fd);
 						// TODO: Remove from array
-					}
-					else
-					{
-						// clients[i]->appendBuffer(buffer);
-						clients[i]->appendBuffer(std::string(buffer));
-						std::string full_Buffer = clients[i]->getBuffer();
-						size_t pos;
-						while((pos = full_Buffer.find("\r\n")) != std::string::npos)
-						{
-							std::string message = full_Buffer.substr(0, pos);
-							full_Buffer = full_Buffer.substr(pos + 2);
-							std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
-							
-							 // handl commands and parse(PASS, NICK ,USER)
-
-							write(fds[i].fd, "Message received: ", 18);
-						}
-						// if (massage_complet(clients[i]->getBuffer()))
-						// {
-						// 	// message commplet 
-						// }
-						// parse message
+					} else {
 						// Process message
 						write(fds[i].fd, "Hello from server!\n", 19);
 					}
@@ -138,5 +112,3 @@ int main() {
 	
 	return 0;
 }
-
-
