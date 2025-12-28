@@ -2,12 +2,12 @@
 
 Client::Client(int fd) : _fd(fd)
 {
-	// _nickname = "";
-	// _username = "";
-	// _realname = "";
-	// _buffer = "";
-	// _passOk = false;
-	// _registered = false;
+	_nickname = "";
+	_username = "";
+	_realname = "";
+	_buffer = "";
+	_passOk = false;
+	_registered = false;
 }
 Client::~Client() {}
 
@@ -23,9 +23,13 @@ Client::~Client() {}
 // 	return _username;
 // }
 
-// bool Client::isRegistered() const {
-// 	return _registered;
-// }
+bool Client::isRegistered() const {
+	return _registered;
+}
+
+void Client::setRegistered(bool reg) {
+	_registered = reg;
+}
 
 // bool Client::isPassOk() const {
 // 	return _passOk;

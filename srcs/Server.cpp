@@ -3,7 +3,10 @@
 #include <unistd.h>
 #include <poll.h>
 #include <stdlib.h>
-#include "includes/Client.hpp"
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include "../includes/Client.hpp"
 // ✔️ khaddam logic dyalo s7i7
 
 // ✔️ multi-client b poll
@@ -14,6 +17,15 @@
 
 // ❌ khasso limits checks
 
+bool Server::isNicknameTaken(std::string nickname)
+{
+	for (int i = 1; i < this->_numFds; i++)
+	{
+		if (this->_clients[i]->getNickname() == nickname)
+			return true;
+	}
+	return false;
+}
 void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
 {
 	// Close the connection
@@ -34,7 +46,7 @@ void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int inde
 }
 
 bool split(const std::string &s, char delimiter,
-           std::string &left, std::string &right)
+			std::string &left, std::string &right)
 {
     std::string::size_type pos = s.find(delimiter);
 
@@ -47,6 +59,39 @@ bool split(const std::string &s, char delimiter,
     return !left.empty() && !right.empty();
 }
 
+void sendError(int fd, const std::string& msg)
+{
+	if (send(fd, msg.c_str(), msg.length(), 0) == -1)
+		write(2, "Error sending data to client.\n", 30);
+}
+
+bool isalpha_string(std::string str)
+{
+	for (size_t i = 0; i < str.length(); ++i)
+	{
+		if (!isalpha(str[i]))
+			return false;
+	}
+	return true;
+}
+
+bool pars_nick(std::string _nickname)
+{
+	// Nickname must start with a letter or special character
+	if (isalpha_string(_nickname))
+		return true;
+
+	// // Check each character in the nickname
+	// for (size_t i = 1; i < _nickname.length(); ++i)
+	// {
+	// 	char c = _nickname[i];
+	// 	if (!isalnum(c) && !strchr("[]\\`_^{|}-", c))
+	// 		return true;
+	// }
+
+	return false;
+}
+
 void Server::processCommand(Client* client, std::string message)
 {
 	std::string command;
@@ -54,18 +99,71 @@ void Server::processCommand(Client* client, std::string message)
 
 	if (split(message, ' ', command, argument))
 	{
+	
 		if (command == "PASS")
 		{
-			// Handle PASS command
+			// if already registered and try again to register 
 			if (client->isRegistered())
+			{
+				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
+				return;
+			}
+
+			// PASS already accepted before (even if not registered)
+			if (client->isPassOk())
+			{
+				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
+				return;
+			}
+
+			// missing argument
+			if (argument.empty())
+			{
+				sendError(client->get_fd(), "server 461 PASS : Not enough parameters\r\n");
+				return;
+			}
+
+			// wrong password
+			if (argument != this->_password)
+			{
+				sendError(client->get_fd(), "server 464 : Password incorrect\r\n");
+				return;
+			}
+
+			// correct password
+			client->setPassOk(true);
 		}
 		else if (command == "NICK")
 		{
-			// Handle NICK command
+			if (!client->isPassOk())
+			{
+				sendError(client->get_fd(), "server 451 : You have not registered\r\n");
+				return;
+			}
+			if (argument.empty())
+			{
+				sendError(client->get_fd(), "server 431 : No nickname given\r\n");
+				return;
+			}
+			// Check if nickname is already in use
+			if (this->isNicknameTaken(argument))
+			{
+				sendError(client->get_fd(), "server 433 " + argument + " : Nickname is already in use\r\n");
+				return ;
+			}
+			if (this->pars_nick(argument))
+			{
+				sendError(client->get_fd(), "server 432 " + argument + " : Erroneous nickname\r\n");
+				return ;
+			}
+			client->setNickname(argument);
 		}
 		else if (command == "USER")
 		{
 			// Handle USER command
+			// Step 3 - client sends USER
+			// 	isPassOk()      = true
+			// 	isRegistered() = true
 		}
 		else
 		{
@@ -74,8 +172,14 @@ void Server::processCommand(Client* client, std::string message)
 	}
 	else
 	{
+		client->setPassOk(false);
 		// Invalid command format
 	}
+			// check user and pass and niclk are set
+			// if (client->isRegistered() && client->getUsername().empty() == false)
+			// {
+			// 	sendError(client->get_fd(), "server 001 " + argument + " : Welcome to the Internet Relay Network\r\n");
+			// }
 
 }
 
@@ -119,7 +223,8 @@ int main() {
 			if (fds[0].revents & POLLIN)
 			{
 				int client_fd = accept(fds[0].fd, NULL, NULL); // Accept new connection or client
-				
+				char ip[INET_ADDRSTRLEN];
+				inet_ntop(AF_INET, &address.sin_addr, ip, sizeof(ip));
 				// Add new client to our monitoring list
 				fds[num_fds].fd = client_fd;
 				fds[num_fds].events = POLLIN;
@@ -134,7 +239,6 @@ int main() {
 				if (fds[i].revents & POLLIN) {
 					char buffer[512];
 					int bytes = read(fds[i].fd, buffer, 512);
-					buffer[bytes] = '\0';
 
 					if (bytes == 0)
 					{
@@ -154,6 +258,7 @@ int main() {
 					}
 					else
 					{
+						buffer[bytes] = '\0';
 						// clients[i]->appendBuffer(buffer);
 						clients[i]->appendBuffer(std::string(buffer));
 						std::string full_Buffer = clients[i]->getBuffer();

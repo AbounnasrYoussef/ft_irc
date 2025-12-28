@@ -12,6 +12,9 @@
 
 class Client;
 
+void sendError(int fd, const std::string& msg);
+bool isalpha_string(std::string str);
+
 class Server {
 	private:
 		int _serverFd;                    // Server socket fd
@@ -42,6 +45,7 @@ class Server {
 	// Utilities
 	Client* getClientByNick(std::string nickname);
 	bool isNicknameTaken(std::string nickname);
+	bool pars_nick(std::string _nickname);
 };
 
 

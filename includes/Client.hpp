@@ -20,7 +20,7 @@ class Client {
 		~Client();
 		
 		// Getters
-		int getFd() const;
+		int get_fd() const;
 		std::string getNickname() const;
 		std::string getUsername() const;
 		bool isRegistered() const;

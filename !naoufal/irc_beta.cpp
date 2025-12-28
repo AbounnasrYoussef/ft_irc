@@ -42,7 +42,7 @@ int main() {
 	struct sockaddr_in address;   /// socket(ip:port) for this process 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(6667);
+	address.sin_port = htons(6668);
 	bind(server_fd, (struct sockaddr*)&address, sizeof(address));
 	
 	// 3. Start listening
@@ -103,6 +103,7 @@ int main() {
 					} else {
 						// Process message
 						write(fds[i].fd, "Hello from server!\n", 19);
+						send(2, buffer, bytes, 0);
 					}
 				}
 			}
