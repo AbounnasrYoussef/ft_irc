@@ -27,7 +27,7 @@ class Server {
 		std::string _password;            // Server password
 		struct pollfd _fds[MAX_CLIENTS];  // Poll array
 		Client* _clients[MAX_CLIENTS];    // Array of client pointers
-		int _numFds;                      // Number of active fds
+		// int _numFds;                      // Number of active fds
 	
 	public:
 		Server();

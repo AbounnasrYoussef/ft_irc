@@ -22,10 +22,14 @@
 // add save number of fds in client class
 
 
+Server::Server(int port, std::string password)
+{
+	_port = port;
+	_password = password;
+	_serverFd = -1;
+}
 
-
-bool split(const std::string &s, char delimiter,
-			std::string &left, std::string &right)
+bool split(const std::string &s, char delimiter, std::string &left, std::string &right)
 {
     std::string::size_type pos = s.find(delimiter);
 
