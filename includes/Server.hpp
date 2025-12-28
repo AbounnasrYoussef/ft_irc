@@ -5,11 +5,9 @@
 # define MAX_CLIENTS 10
 
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <unistd.h>
 #include <poll.h>
 #include <stdlib.h>
-#include <string>        // std::string
 #include <netdb.h>       // getnameinfo, NI_MAXHOST
 #include <sys/socket.h>  // sockaddr, sockaddr_storage
 #include <netinet/in.h>  // sockaddr_in, sockaddr_in6
