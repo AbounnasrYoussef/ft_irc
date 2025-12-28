@@ -1,7 +1,7 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 #include <iostream>
-
+#include "Server.hpp"
 // void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
 
 bool massage_complet(std::string buffer);
@@ -36,7 +36,7 @@ class Client {
 		
 		// Buffer management
 		void appendBuffer(std::string const data);
-		void clearBuffer();
+		// void clearBuffer();
 };
 
 #endif

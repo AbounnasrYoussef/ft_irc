@@ -1,17 +1,33 @@
+#include <string>
 #include <iostream>
+
+
+bool split(const std::string &s, char delimiter,
+           std::string &left, std::string &right)
+{
+    std::string::size_type pos = s.find(delimiter);
+
+    if (pos == std::string::npos)
+        return false;
+
+    left = s.substr(0, pos);
+    right = s.substr(pos + 1);
+
+    return !left.empty() && !right.empty();
+}
 
 int main()
 {
-	std::string buffer = "NICK alice\r\nPASS secret\r\nUSER";
-
-	// Find first \r\n
-	size_t pos = buffer.find("\r\n");  // pos = ???
-	// std::cout << pos << 
-	// // Extract message
-	// 	std::string message = buffer.substr(0, pos);  // me	ssage = ???
-
-	// // Remove from buffer
-	// buffer = buffer.substr(pos + 2);  // buffer = ???
-	std::cout << buffer[10] << "\n";
-	
+	std::string command;
+	std::string argment;
+	// command =  ;
+	if (split("USER alice 0 * :Alice Smith", ' ', command, argment))
+	{
+		std::cout << "Command: " << command << std::endl;
+		std::cout << "Argument: " << argment << std::endl;
+	}
+	else
+	{
+		std::cout << "Error: Invalid command format." << std::endl;
+	}
 }

@@ -33,9 +33,55 @@ void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int inde
 	num_fds--;
 }
 
+bool split(const std::string &s, char delimiter,
+           std::string &left, std::string &right)
+{
+    std::string::size_type pos = s.find(delimiter);
+
+    if (pos == std::string::npos)
+        return false;
+
+    left = s.substr(0, pos);
+    right = s.substr(pos + 1);
+
+    return !left.empty() && !right.empty();
+}
+
+void Server::processCommand(Client* client, std::string message)
+{
+	std::string command;
+    std::string argument;
+
+	if (split(message, ' ', command, argument))
+	{
+		if (command == "PASS")
+		{
+			// Handle PASS command
+			if (client->isRegistered())
+		}
+		else if (command == "NICK")
+		{
+			// Handle NICK command
+		}
+		else if (command == "USER")
+		{
+			// Handle USER command
+		}
+		else
+		{
+			// Unknown command
+		}
+	}
+	else
+	{
+		// Invalid command format
+	}
+
+}
+
 int main() {
 	// 1. Create server socket
-	int MAX_CLIENTS = 100;
+	// int MAX_CLIENTS = 100;
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0); // buffering tcp create
 
 	// 2. Bind to port 
