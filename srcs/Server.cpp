@@ -54,45 +54,75 @@ bool isalpha_string(std::string str)
 	return true;
 }
 
-bool user_parsing(std::string argument, Client* client)
+// bool user_parsing(std::string argument, Client* client)
+// {
+// 	size_t count = 0;
+// 	for (size_t i = 0; i < argument.length(); ++i)
+// 	{
+// 		if (argument[i] == ' ')
+// 			count++;
+// 	}
+// 	if (count != 3)
+// 		return false;
+// 	// USER <username> <hostname> <servername> :<realname>
+// 	std::string username, hostname, servername, realname;
+// 	size_t first_space = argument.find(' ');
+// 	if (first_space == std::string::npos)
+// 		return false;
+// 	username = argument.substr(0, first_space);
+// 	argument = argument.substr(first_space + 1);
+
+// 	size_t second_space = argument.find(' ');
+// 	if (second_space == std::string::npos)
+// 		return false;
+// 	hostname = argument.substr(0, second_space);
+// 	argument = argument.substr(second_space + 1);
+
+// 	size_t third_space = argument.find(' ');
+// 	if (third_space == std::string::npos)
+// 		return false;
+// 	servername = argument.substr(0, third_space);
+// 	argument = argument.substr(third_space + 1);
+
+// 	if (argument[0] != ':')
+// 		return false;
+// 	realname = argument.substr(1);
+
+// 	client->setUsername(username);
+// 	client->setRealname(realname);
+// 	// client->setRegistered(true);
+// 	return true;
+// }
+#include <sstream> // for iss
+
+bool user_parsing(const std::string& argument, Client* client) // need learn for this fuction
 {
-	size_t count = 0;
-	for (size_t i = 0; i < argument.length(); ++i)
-	{
-		if (argument[i] == ' ')
-			count++;
-	}
-	if (count != 3)
-		return false;
-	// USER <username> <hostname> <servername> :<realname>
-	std::string username, hostname, servername, realname;
-	size_t first_space = argument.find(' ');
-	if (first_space == std::string::npos)
-		return false;
-	username = argument.substr(0, first_space);
-	argument = argument.substr(first_space + 1);
+    // 1) realname must start with ':'
+    size_t colonPos = argument.find(" :");
+    if (colonPos == std::string::npos)
+        return false;
 
-	size_t second_space = argument.find(' ');
-	if (second_space == std::string::npos)
-		return false;
-	hostname = argument.substr(0, second_space);
-	argument = argument.substr(second_space + 1);
+    // 2) split into "before :" and "realname"
+    std::string before = argument.substr(0, colonPos);
+    std::string realname = argument.substr(colonPos + 2);
 
-	size_t third_space = argument.find(' ');
-	if (third_space == std::string::npos)
-		return false;
-	servername = argument.substr(0, third_space);
-	argument = argument.substr(third_space + 1);
+    if (realname.empty())
+        return false;
 
-	if (argument[0] != ':')
-		return false;
-	realname = argument.substr(1);
+    // 3) split the part before ':' into tokens
+    std::istringstream iss(before);
+    std::string username, hostname, servername;
 
-	client->setUsername(username);
-	client->setRealname(realname);
-	client->setRegistered(true);
-	return true;
+    if (!(iss >> username >> hostname >> servername))
+        return false;
+
+    // 4) store values
+    client->setUsername(username);
+    client->setRealname(realname);
+
+    return true;
 }
+
 
 void processCommand(Client* client, std::string message)
 {
@@ -162,50 +192,49 @@ void processCommand(Client* client, std::string message)
 		}
 		else if (command == "USER")
 		{
-			// Handle USER command
-			// Step 3 - client sends USER
-			// 	isPassOk()      = true
-			// 	isRegistered() = true
+			// 1) USER after full registration is forbidden
 			if (client->isRegistered())
 			{
 				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
 				return;
 			}
 
+			// 2) PASS must be done first
 			if (!client->isPassOk())
 			{
 				sendError(client->get_fd(), "server 451 : You have not registered\r\n");
 				return;
 			}
 
-			if (client->isRegistered() == false && client->isPassOk() == false)
+			// 3) USER requires parameters
+			if (argument.empty())
 			{
-				sendError(client->get_fd(), "server 451 : You have not registered\r\n");
+				sendError(client->get_fd(), "server 461 USER : Not enough parameters\r\n");
 				return;
 			}
-			// missing argument
-			
-			if (user_parsing(argument, client) == false)
+
+			// 4) Parse USER arguments (username + realname)
+			if (!user_parsing(argument, client))
 			{
-				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
+				sendError(client->get_fd(), "server 461 USER : Not enough parameters\r\n");
 				return;
 			}
-		}
-		else
-		{
-			// Unknown command
+
+			// 5) Try to complete registration
+			if (!client->isRegistered() && client->isPassOk() && !client->getNickname().empty() && !client->getUsername().empty())
+			{
+				client->setRegistered(true);
+				sendError(client->get_fd(), "server 001 " + client->getNickname() + " : Welcome to the Internet Relay Network\r\n");
+			}
 		}
 	}
 	else
 	{
 		client->setPassOk(false);
+		sendError(client->get_fd(), "server 421 " + command + " : Unknown command\r\n");
+		
 		// Invalid command format
 	}
-			// check user and pass and niclk are set
-			// if (client->isRegistered() && client->getUsername().empty() == false)
-			// {
-			// 	sendError(client->get_fd(), "server 001 " + argument + " : Welcome to the Internet Relay Network\r\n");
-			// }
 
 }
 
@@ -228,7 +257,8 @@ int main() {
 	struct pollfd fds[MAX_CLIENTS];
 	fds[0].fd = server_fd;
 	fds[0].events = POLLIN;
-	int num_fds = 1;
+	// int g_num_fds = 1;
+	int g_num_fds = 1;
 	
 	// 5. Main loop
 	Client* clients[MAX_CLIENTS];
@@ -236,7 +266,7 @@ int main() {
 	{
 		// ===============================================================
 		// Wait for activity on any file descriptor
-		int ret = poll(fds, num_fds, -1);  // -1 = wait forever
+		int ret = poll(fds, g_num_fds, -1);  // -1 = wait forever
 		
 		if (ret == -1) {
 			// Error - clean up and exit
@@ -251,7 +281,7 @@ int main() {
 				// int client_fd = accept(fds[0].fd, NULL, NULL); // Accept new connection or client
 				// char ip[INET_ADDRSTRLEN];
 				// inet_ntop(AF_INET, &address.sin_addr, ip, sizeof(ip));
-					sockaddr_storage client_addr;
+				sockaddr_storage client_addr;
 				socklen_t len = sizeof(client_addr);
 
 				int client_fd = accept(server_fd, (sockaddr*)&client_addr, &len);
@@ -259,16 +289,16 @@ int main() {
 				std::string ip = getClientIP(client_addr, len);
 				// Add new client to our monitoring list
 
-				fds[num_fds].fd = client_fd;
-				fds[num_fds].events = POLLIN;
-				clients[num_fds] = new Client(client_fd);
-				num_fds++; // add to array
+				fds[g_num_fds].fd = client_fd;
+				fds[g_num_fds].events = POLLIN;
+				clients[g_num_fds] = new Client(client_fd);
+				g_num_fds++; // add to array
 				// crate new client in arr of class
 			}
 			
 			// ==============================
 			// Check all connected clients for messages
-			for (int i = 1; i < num_fds; i++) {
+			for (int i = 1; i < g_num_fds; i++) {
 				if (fds[i].revents & POLLIN) {
 					char buffer[512];
 					int bytes = read(fds[i].fd, buffer, 512);
@@ -276,9 +306,8 @@ int main() {
 					if (bytes == 0)
 					{
 						// Client disconnected
-						
 						write(fds[i].fd, "Client is diconnected Goodbye!\n", 9);
-						removeClient(fds, clients, num_fds, i);
+						removeClient(fds, clients, g_num_fds, i);
 						continue;
 					}
 
@@ -306,9 +335,8 @@ int main() {
 
 							write(fds[i].fd, "Message received: ", 18);
 						}
-						
 						processCommand(clients[i], full_Buffer); // handle after is commenands success
-							// Successfully processed command
+						// Successfully processed command
 						// if (massage_complet(clients[i]->getBuffer()))
 						// {
 						// 	// message commplet 

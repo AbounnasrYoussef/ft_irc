@@ -6,8 +6,8 @@
 
 void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
-bool massage_complet(std::string buffer);
-bool user_parsing(std::string argument, Client* client);
+// bool massage_complet(std::string buffer);
+bool user_parsing(const std::string& argument, Client* client);
 bool pars_nick(std::string _nickname);
 
 

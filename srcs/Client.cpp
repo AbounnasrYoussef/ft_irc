@@ -12,28 +12,41 @@ Client::Client(int fd) : _fd(fd)
 Client::~Client() {}
 
 // Getters
-// int Client::getFd() const {
-// 	return _fd;
-// }
-// std::string Client::getNickname() const {
-// 	return _nickname;
-// }
+int Client::get_fd() const
+{
+	return _fd;
+}
 
-// std::string Client::getUsername() const {
-// 	return _username;
-// }
+std::string Client::getNickname() const
+{
+	return _nickname;
+}
 
-bool Client::isRegistered() const {
+std::string Client::getUsername() const
+{
+	return _username;
+}
+
+bool Client::isRegistered() const
+{
 	return _registered;
 }
 
-void Client::setRegistered(bool reg) {
+std::string Client::getIP() const
+{
+	return _ip;
+}
+
+
+void Client::setRegistered(bool reg)
+{
 	_registered = reg;
 }
 
-// bool Client::isPassOk() const {
-// 	return _passOk;
-// }
+bool Client::isPassOk() const
+{
+	return _passOk;
+}
 
 std::string Client::getBuffer() const {
 	return _buffer;
@@ -41,16 +54,30 @@ std::string Client::getBuffer() const {
 
 // Setters
 
-// void Client::setNickname(std::string nick) {
-// 	_nickname = nick;
-// }
+void Client::setNickname(std::string nick)
+{
+	_nickname = nick;
+}
 
-// void Client::setUsername(std::string user) {
-// 	_username = user;
-// }
+void Client::setUsername(std::string user)
+{
+	_username = user;
+}
 
-void Client::appendBuffer(std::string const data) {
+
+void Client::appendBuffer(std::string const data)
+{
 	_buffer += data;
+}
+
+void Client::setRealname(std::string real)
+{
+	_realname = real;
+}
+
+void Client::setPassOk(bool ok)
+{
+	_passOk = ok;
 }
 
 bool Client::isNicknameTaken(std::string nickname)
