@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include "../includes/Client.hpp"
+#include "../includes/Server.hpp"
+#include "../includes/Client.hpp"
 // ✔️ khaddam logic dyalo s7i7
 
 // ✔️ multi-client b poll
@@ -17,15 +19,9 @@
 
 // ❌ khasso limits checks
 
-bool Server::isNicknameTaken(std::string nickname)
-{
-	for (int i = 1; i < this->_numFds; i++)
-	{
-		if (this->_clients[i]->getNickname() == nickname)
-			return true;
-	}
-	return false;
-}
+// add save number of fds in client class
+
+
 void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
 {
 	// Close the connection
@@ -92,7 +88,47 @@ bool pars_nick(std::string _nickname)
 	return false;
 }
 
-void Server::processCommand(Client* client, std::string message)
+bool user_parsing(std::string argument, Client* client)
+{
+	size_t count = 0;
+	for (size_t i = 0; i < argument.length(); ++i)
+	{
+		if (argument[i] == ' ')
+			count++;
+	}
+	if (count != 3)
+		return false;
+	// USER <username> <hostname> <servername> :<realname>
+	std::string username, hostname, servername, realname;
+	size_t first_space = argument.find(' ');
+	if (first_space == std::string::npos)
+		return false;
+	username = argument.substr(0, first_space);
+	argument = argument.substr(first_space + 1);
+
+	size_t second_space = argument.find(' ');
+	if (second_space == std::string::npos)
+		return false;
+	hostname = argument.substr(0, second_space);
+	argument = argument.substr(second_space + 1);
+
+	size_t third_space = argument.find(' ');
+	if (third_space == std::string::npos)
+		return false;
+	servername = argument.substr(0, third_space);
+	argument = argument.substr(third_space + 1);
+
+	if (argument[0] != ':')
+		return false;
+	realname = argument.substr(1);
+
+	client->setUsername(username);
+	client->setRealname(realname);
+	client->setRegistered(true);
+	return true;
+}
+
+void processCommand(Client* client, std::string message)
 {
 	std::string command;
     std::string argument;
@@ -124,7 +160,7 @@ void Server::processCommand(Client* client, std::string message)
 			}
 
 			// wrong password
-			if (argument != this->_password)
+			if (argument != client->_password)
 			{
 				sendError(client->get_fd(), "server 464 : Password incorrect\r\n");
 				return;
@@ -146,7 +182,7 @@ void Server::processCommand(Client* client, std::string message)
 				return;
 			}
 			// Check if nickname is already in use
-			if (this->isNicknameTaken(argument))
+			if (clinet->isNicknameTaken(argument))
 			{
 				sendError(client->get_fd(), "server 433 " + argument + " : Nickname is already in use\r\n");
 				return ;
@@ -164,6 +200,30 @@ void Server::processCommand(Client* client, std::string message)
 			// Step 3 - client sends USER
 			// 	isPassOk()      = true
 			// 	isRegistered() = true
+			if (client->isRegistered())
+			{
+				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
+				return;
+			}
+
+			if (!client->isPassOk())
+			{
+				sendError(client->get_fd(), "server 451 : You have not registered\r\n");
+				return;
+			}
+
+			if (client->isRegistered() == false && client->isPassOk() == false)
+			{
+				sendError(client->get_fd(), "server 451 : You have not registered\r\n");
+				return;
+			}
+			// missing argument
+			
+			if (user_parsing(argument, client) == false)
+			{
+				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
+				return;
+			}
 		}
 		else
 		{
@@ -222,10 +282,17 @@ int main() {
 			// Check if someone wants to connect
 			if (fds[0].revents & POLLIN)
 			{
-				int client_fd = accept(fds[0].fd, NULL, NULL); // Accept new connection or client
-				char ip[INET_ADDRSTRLEN];
-				inet_ntop(AF_INET, &address.sin_addr, ip, sizeof(ip));
+				// int client_fd = accept(fds[0].fd, NULL, NULL); // Accept new connection or client
+				// char ip[INET_ADDRSTRLEN];
+				// inet_ntop(AF_INET, &address.sin_addr, ip, sizeof(ip));
+					sockaddr_storage client_addr;
+				socklen_t len = sizeof(client_addr);
+
+				int client_fd = accept(server_fd, (sockaddr*)&client_addr, &len);
+
+				std::string ip = getClientIP(client_addr, len);
 				// Add new client to our monitoring list
+
 				fds[num_fds].fd = client_fd;
 				fds[num_fds].events = POLLIN;
 				clients[num_fds] = new Client(client_fd);
@@ -272,6 +339,10 @@ int main() {
 							 // handl commands and parse(PASS, NICK ,USER)
 
 							write(fds[i].fd, "Message received: ", 18);
+						}
+						if (clients[i]->processCommand(clients[i], full_Buffer))
+						{
+							// Successfully processed command
 						}
 						// if (massage_complet(clients[i]->getBuffer()))
 						// {

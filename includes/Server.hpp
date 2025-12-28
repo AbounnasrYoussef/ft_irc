@@ -9,11 +9,17 @@
 #include <unistd.h>
 #include <poll.h>
 #include <stdlib.h>
+#include <string>        // std::string
+#include <netdb.h>       // getnameinfo, NI_MAXHOST
+#include <sys/socket.h>  // sockaddr, sockaddr_storage
+#include <netinet/in.h>  // sockaddr_in, sockaddr_in6
+#include <arpa/inet.h>   // AF_INET, AF_INET6
 
 class Client;
 
 void sendError(int fd, const std::string& msg);
 bool isalpha_string(std::string str);
+void processCommand(Client* client, std::string message);
 
 class Server {
 	private:
@@ -39,7 +45,7 @@ class Server {
 	void removeClient(int index);     // Disconnect and cleanup
 	
 	// Message handling
-	void processCommand(Client* client, std::string message);
+	// void processCommand(Client* client, std::string message);
 	void broadcastToChannel(std::string channelName, std::string message, Client* sender);
 	
 	// Utilities

@@ -53,3 +53,12 @@ void Client::appendBuffer(std::string const data) {
 	_buffer += data;
 }
 
+bool Client::isNicknameTaken(std::string nickname)
+{
+	for (int i = 1; i < this->_numFds; i++)
+	{
+		if (this->getNickname() == nickname)
+			return true;
+	}
+	return false;
+}
