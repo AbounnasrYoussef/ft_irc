@@ -42,7 +42,7 @@ class Server {
 	void setupSocket();               // socket() + bind() + listen()
 	void acceptNewClient();           // accept() new connection
 	void handleClientData(int index); // Process client messages
-	void removeClient(int index);     // Disconnect and cleanup
+	// void removeClient(int index);     // Disconnect and cleanup
 	
 	// Message handling
 	// void processCommand(Client* client, std::string message);
@@ -51,7 +51,6 @@ class Server {
 	// Utilities
 	Client* getClientByNick(std::string nickname);
 	bool isNicknameTaken(std::string nickname);
-	bool pars_nick(std::string _nickname);
 };
 
 

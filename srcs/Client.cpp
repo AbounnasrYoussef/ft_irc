@@ -62,3 +62,38 @@ bool Client::isNicknameTaken(std::string nickname)
 	}
 	return false;
 }
+
+bool pars_nick(std::string _nickname)
+{
+	// Nickname must start with a letter or special character
+	if (isalpha_string(_nickname))
+		return true;
+
+	// // Check each character in the nickname
+	// for (size_t i = 1; i < _nickname.length(); ++i)
+	// {
+	// 	char c = _nickname[i];
+	// 	if (!isalnum(c) && !strchr("[]\\`_^{|}-", c))
+	// 		return true;
+	// }
+
+	return false;
+}
+void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
+{
+	// Close the connection
+	close(fds[index].fd);
+	
+	// Delete the Client object
+	delete clients[index];
+	clients[index] = NULL;
+	
+	// Shift both arrays
+	for (int i = index; i < num_fds - 1; i++) {
+		fds[i] = fds[i + 1];
+		clients[i] = clients[i + 1];
+	}
+	
+	// Decrease count
+	num_fds--;
+}

@@ -22,24 +22,7 @@
 // add save number of fds in client class
 
 
-void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
-{
-	// Close the connection
-	close(fds[index].fd);
-	
-	// Delete the Client object
-	delete clients[index];
-	clients[index] = NULL;
-	
-	// Shift both arrays
-	for (int i = index; i < num_fds - 1; i++) {
-		fds[i] = fds[i + 1];
-		clients[i] = clients[i + 1];
-	}
-	
-	// Decrease count
-	num_fds--;
-}
+
 
 bool split(const std::string &s, char delimiter,
 			std::string &left, std::string &right)
@@ -69,23 +52,6 @@ bool isalpha_string(std::string str)
 			return false;
 	}
 	return true;
-}
-
-bool pars_nick(std::string _nickname)
-{
-	// Nickname must start with a letter or special character
-	if (isalpha_string(_nickname))
-		return true;
-
-	// // Check each character in the nickname
-	// for (size_t i = 1; i < _nickname.length(); ++i)
-	// {
-	// 	char c = _nickname[i];
-	// 	if (!isalnum(c) && !strchr("[]\\`_^{|}-", c))
-	// 		return true;
-	// }
-
-	return false;
 }
 
 bool user_parsing(std::string argument, Client* client)
@@ -182,12 +148,12 @@ void processCommand(Client* client, std::string message)
 				return;
 			}
 			// Check if nickname is already in use
-			if (clinet->isNicknameTaken(argument))
+			if (client->isNicknameTaken(argument))
 			{
 				sendError(client->get_fd(), "server 433 " + argument + " : Nickname is already in use\r\n");
 				return ;
 			}
-			if (this->pars_nick(argument))
+			if (pars_nick(argument))
 			{
 				sendError(client->get_fd(), "server 432 " + argument + " : Erroneous nickname\r\n");
 				return ;
@@ -340,10 +306,9 @@ int main() {
 
 							write(fds[i].fd, "Message received: ", 18);
 						}
-						if (clients[i]->processCommand(clients[i], full_Buffer))
-						{
+						
+						processCommand(clients[i], full_Buffer); // handle after is commenands success
 							// Successfully processed command
-						}
 						// if (massage_complet(clients[i]->getBuffer()))
 						// {
 						// 	// message commplet 
