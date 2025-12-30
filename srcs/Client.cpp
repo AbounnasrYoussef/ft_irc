@@ -1,4 +1,4 @@
-#include "includes/Client.hpp"
+#include "../includes/Client.hpp"
 
 Client::Client(int fd) : _fd(fd)
 {
@@ -7,9 +7,9 @@ Client::Client(int fd) : _fd(fd)
 	_realname = "";
 	_buffer = "";
 	_passOk = false;
-	_registered = false;
+	// _registered = false;
 }
-Client::~Client() {}
+// Client::~Client() {}
 
 // Getters
 int Client::get_fd() const
@@ -29,7 +29,7 @@ std::string Client::getUsername() const
 
 bool Client::isRegistered() const
 {
-	return _registered;
+	return _passOk && !_nickname.empty() && !_username.empty();
 }
 
 std::string Client::getIP() const
@@ -38,10 +38,10 @@ std::string Client::getIP() const
 }
 
 
-void Client::setRegistered(bool reg)
-{
-	_registered = reg;
-}
+// void Client::setRegistered(bool reg) // no need
+// {
+// 	_registered = reg;
+// }
 
 bool Client::isPassOk() const
 {
@@ -79,16 +79,20 @@ void Client::setPassOk(bool ok)
 {
 	_passOk = ok;
 }
-
-bool Client::isNicknameTaken(std::string nickname)
+Client::~Client()
 {
-	for (int i = 1; i < this->_numFds; i++)
-	{
-		if (this->getNickname() == nickname)
-			return true;
-	}
-	return false;
+
 }
+
+// bool Client::isNicknameTaken(std::string nickname)
+// {
+// 	for (int i = 1; i < g_num_fds; i++)
+// 	{
+// 		if (this->getNickname() == nickname)
+// 			return true;
+// 	}
+// 	return false;
+// }
 
 bool pars_nick(std::string _nickname)
 {

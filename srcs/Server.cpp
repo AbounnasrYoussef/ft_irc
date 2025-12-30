@@ -21,12 +21,9 @@
 
 // add save number of fds in client class
 
-
-Server::Server(int port, std::string password)
+Server::~Server()
 {
-	_port = port;
-	_password = password;
-	_serverFd = -1;
+	close(this->server_Fd);
 }
 
 bool split(const std::string &s, char delimiter, std::string &left, std::string &right)
@@ -98,6 +95,17 @@ bool isalpha_string(std::string str)
 // 	return true;
 // }
 #include <sstream> // for iss
+std::string getClientIP(const sockaddr_storage &addr, socklen_t len) // i nedd learn from here this function 
+{
+	char host[NI_MAXHOST];
+
+	if (getnameinfo((const sockaddr*)&addr, len, host, sizeof(host), NULL, 0, NI_NUMERICHOST) == 0)
+	{
+		return std::string(host);
+	}
+	return std::string();
+}
+
 
 bool user_parsing(const std::string& argument, Client* client) // need learn for this fuction
 {
@@ -128,234 +136,169 @@ bool user_parsing(const std::string& argument, Client* client) // need learn for
 }
 
 
-void processCommand(Client* client, std::string message)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Server::Server(int port, std::string password)
 {
-	std::string command;
-    std::string argument;
-
-	if (split(message, ' ', command, argument))
-	{
-	
-		if (command == "PASS")
-		{
-			// if already registered and try again to register 
-			if (client->isRegistered())
-			{
-				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
-				return;
-			}
-
-			// PASS already accepted before (even if not registered)
-			if (client->isPassOk())
-			{
-				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
-				return;
-			}
-
-			// missing argument
-			if (argument.empty())
-			{
-				sendError(client->get_fd(), "server 461 PASS : Not enough parameters\r\n");
-				return;
-			}
-
-			// wrong password
-			if (argument != client->_password)
-			{
-				sendError(client->get_fd(), "server 464 : Password incorrect\r\n");
-				return;
-			}
-
-			// correct password
-			client->setPassOk(true);
-		}
-		else if (command == "NICK")
-		{
-			if (!client->isPassOk())
-			{
-				sendError(client->get_fd(), "server 451 : You have not registered\r\n");
-				return;
-			}
-			if (argument.empty())
-			{
-				sendError(client->get_fd(), "server 431 : No nickname given\r\n");
-				return;
-			}
-			// Check if nickname is already in use
-			if (client->isNicknameTaken(argument))
-			{
-				sendError(client->get_fd(), "server 433 " + argument + " : Nickname is already in use\r\n");
-				return ;
-			}
-			if (pars_nick(argument))
-			{
-				sendError(client->get_fd(), "server 432 " + argument + " : Erroneous nickname\r\n");
-				return ;
-			}
-			client->setNickname(argument);
-		}
-		else if (command == "USER")
-		{
-			// 1) USER after full registration is forbidden
-			if (client->isRegistered())
-			{
-				sendError(client->get_fd(), "server 462 : You may not reregister\r\n");
-				return;
-			}
-
-			// 2) PASS must be done first
-			if (!client->isPassOk())
-			{
-				sendError(client->get_fd(), "server 451 : You have not registered\r\n");
-				return;
-			}
-
-			// 3) USER requires parameters
-			if (argument.empty())
-			{
-				sendError(client->get_fd(), "server 461 USER : Not enough parameters\r\n");
-				return;
-			}
-
-			// 4) Parse USER arguments (username + realname)
-			if (!user_parsing(argument, client))
-			{
-				sendError(client->get_fd(), "server 461 USER : Not enough parameters\r\n");
-				return;
-			}
-
-			// 5) Try to complete registration
-			if (!client->isRegistered() && client->isPassOk() && !client->getNickname().empty() && !client->getUsername().empty())
-			{
-				client->setRegistered(true);
-				sendError(client->get_fd(), "server 001 " + client->getNickname() + " : Welcome to the Internet Relay Network\r\n");
-			}
-		}
-	}
-	else
-	{
-		client->setPassOk(false);
-		sendError(client->get_fd(), "server 421 " + command + " : Unknown command\r\n");
-		
-		// Invalid command format
-	}
-
+	this->port = port;
+	this->password = password;
+	this->server_Fd = -1;
 }
 
-int main() {
-	// 1. Create server socket
-	// int MAX_CLIENTS = 100;
-	int server_fd = socket(AF_INET, SOCK_STREAM, 0); // buffering tcp create
+void Server::setupSocket()
+{
+	// this->_
+	// this->_serverFd
+	this->server_Fd = socket(AF_INET, SOCK_STREAM, 0); // buffering tcp create
 
 	// 2. Bind to port 
 	struct sockaddr_in address;   /// socket(ip:port) for this process 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(6667);
-	bind(server_fd, (struct sockaddr*)&address, sizeof(address));
+	address.sin_port = htons(this->port);
+	bind(this->server_Fd, (struct sockaddr*)&address, sizeof(address));
 	
 	// 3. Start listening
-	listen(server_fd, 3); // am ready to accept connections (work) (10.50.20.7:6667)
-	
-	// 4. Set up poll
-	struct pollfd fds[MAX_CLIENTS];
-	fds[0].fd = server_fd;
-	fds[0].events = POLLIN;
+	listen(this->server_Fd, 3); // am ready to accept connections (work) (10.50.20.7:6667)
+	// this->_fds[MAX_CLIENTS];
+	this->_fds[0].fd = this->server_Fd;
+	this->_fds[0].events = POLLIN;
 	// int g_num_fds = 1;
-	int g_num_fds = 1;
 	
-	// 5. Main loop
-	Client* clients[MAX_CLIENTS];
-	while (true)
-	{
-		// ===============================================================
-		// Wait for activity on any file descriptor
-		int ret = poll(fds, g_num_fds, -1);  // -1 = wait forever
-		
-		if (ret == -1) {
-			// Error - clean up and exit
-			exit(0);
-		}
-		
-		if (ret > 0) {  // Something happened!
-			// ==============================
-			// Check if someone wants to connect
-			if (fds[0].revents & POLLIN)
-			{
-				// int client_fd = accept(fds[0].fd, NULL, NULL); // Accept new connection or client
-				// char ip[INET_ADDRSTRLEN];
-				// inet_ntop(AF_INET, &address.sin_addr, ip, sizeof(ip));
-				sockaddr_storage client_addr;
-				socklen_t len = sizeof(client_addr);
-
-				int client_fd = accept(server_fd, (sockaddr*)&client_addr, &len);
-
-				std::string ip = getClientIP(client_addr, len);
-				// Add new client to our monitoring list
-
-				fds[g_num_fds].fd = client_fd;
-				fds[g_num_fds].events = POLLIN;
-				clients[g_num_fds] = new Client(client_fd);
-				g_num_fds++; // add to array
-				// crate new client in arr of class
-			}
-			
-			// ==============================
-			// Check all connected clients for messages
-			for (int i = 1; i < g_num_fds; i++) {
-				if (fds[i].revents & POLLIN) {
-					char buffer[512];
-					int bytes = read(fds[i].fd, buffer, 512);
-
-					if (bytes == 0)
-					{
-						// Client disconnected
-						write(fds[i].fd, "Client is diconnected Goodbye!\n", 9);
-						removeClient(fds, clients, g_num_fds, i);
-						continue;
-					}
-
-					if (bytes == -1)
-					{
-						// Error reading - close connection
-						write(2, "Error reading data. Closing connection.\n", 41);
-						close(fds[i].fd);
-						// TODO: Remove from array
-					}
-					else
-					{
-						buffer[bytes] = '\0';
-						// clients[i]->appendBuffer(buffer);
-						clients[i]->appendBuffer(std::string(buffer));
-						std::string full_Buffer = clients[i]->getBuffer();
-						size_t pos;
-						while((pos = full_Buffer.find("\r\n")) != std::string::npos)
-						{
-							std::string message = full_Buffer.substr(0, pos);
-							full_Buffer = full_Buffer.substr(pos + 2);
-							std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
-							
-							 // handl commands and parse(PASS, NICK ,USER)
-
-							write(fds[i].fd, "Message received: ", 18);
-						}
-						processCommand(clients[i], full_Buffer); // handle after is commenands success
-						// Successfully processed command
-						// if (massage_complet(clients[i]->getBuffer()))
-						// {
-						// 	// message commplet 
-						// }
-						// parse message
-						// Process message
-						write(fds[i].fd, "Hello from server!\n", 19);
-					}
-				}
-			}
-		}
-		// ===============================================================
-	}
-	
-	return 0;
 }
 
 
+void Server::accept_NewClient()
+{
+	sockaddr_storage client_addr;
+	socklen_t len = sizeof(client_addr);
+
+	int client_fd = accept(this->server_Fd, (sockaddr*)&client_addr, &len);
+
+	std::string ip = getClientIP(client_addr, len);
+	// Add new client to our monitoring list
+
+	this->_fds[g_num_fds].fd = client_fd;
+	this->_fds[g_num_fds].events = POLLIN;
+	this->clients[g_num_fds] = new Client(client_fd);
+
+	g_num_fds++; // add to array
+}
+
+
+void Server::handle_ClientData(int index)
+{
+	//  Process client messages
+
+	for (int i = 1; i < g_num_fds; i++)
+	{
+		if (this->_fds[i].revents & POLLIN)
+		{
+			// char buffer[512];
+			int bytes = read(this->_fds[i].fd, this->buffer, 512);
+
+			if (bytes == 0)
+			{
+				// Client disconnected
+				write(this->_fds[i].fd, "Client is diconnected Goodbye!\n", 9);
+				removeClient(this->_fds, clients, g_num_fds, i);
+				continue;
+			}
+
+			if (bytes == -1)
+			{
+				// Error reading - close connection
+				write(2, "Error reading data. Closing connection.\n", 41);
+				close(this->_fds[i].fd);
+				// TODO: Remove from array
+			}
+			else
+			{
+				this->buffer[bytes] = '\0';
+				// this->clients[i]->appendBuffer(buffer);
+				this->clients[i]->appendBuffer(std::string(this->buffer));
+				std::string full_Buffer = this->clients[i]->getBuffer(); // 
+				size_t pos;
+				while((pos = full_Buffer.find("\r\n")) != std::string::npos)
+				{
+					std::string message = full_Buffer.substr(0, pos);
+					full_Buffer = full_Buffer.substr(pos + 2);
+					std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
+					
+					// handl commands and parse(PASS, NICK ,USER)
+
+					write(this->_fds[i].fd, "Message received: ", 18);
+				}
+				// processCommand(this->clients[i], full_Buffer); // handle after is commenands success
+				// Successfully processed command
+				// if (massage_complet(this->clients[i]->getBuffer()))
+				// {
+				// 	// message commplet 
+				// }
+				// parse message
+				// Process message
+				write(this->_fds[i].fd, "Hello from server!\n", 19);
+			}
+		}
+	}
+}
+
+void Server::start()
+{
+	// Server obj;
+	setupSocket();
+	while(true)
+	{
+		int ret = poll(this->_fds, g_num_fds, -1);  // -1 = wait forever
+		if (ret == -1)
+		{
+			// Error - clean up and exit
+			exit(0);
+		}
+		if(ret > 0)
+		{
+			// There are events to process
+		
+			// check for new connections
+			if (this->_fds[0].revents & POLLIN)
+			{
+				accept_NewClient();
+			}
+			// check for client data
+			for (int i = 1; i < g_num_fds; i++)
+			{
+				if (this->_fds[i].revents & POLLIN)
+				{
+					handle_ClientData(i);
+				}
+			}
+		}
+	}
+	
+}

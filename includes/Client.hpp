@@ -1,5 +1,7 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
+
+
 #include <iostream>
 #include "Server.hpp"
 
@@ -20,7 +22,7 @@ class Client {
 		std::string _buffer;        // Message buffer (for partial messages)
 		std::string _ip;                // IP of client 
 		bool _passOk;               // Password authenticated?
-		bool _registered;           // Fully registered? (PASS + NICK + USER)
+		// bool _registered;           // Fully registered? (PASS + NICK + USER) // no need
 		
 	public:
 		Client(int fd);
@@ -42,10 +44,10 @@ class Client {
 		void setUsername(std::string user);
 		void setRealname(std::string real);
 		void setPassOk(bool ok);
-		void setRegistered(bool reg);
+		// void setRegistered(bool reg); no need
 		// Buffer management
 		void appendBuffer(std::string const data);
-		bool isNicknameTaken(std::string nickname);
+		// bool isNicknameTaken(std::string nickname);
 		// void clearBuffer();
 };
 
