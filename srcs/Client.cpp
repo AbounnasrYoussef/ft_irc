@@ -7,9 +7,12 @@ Client::Client(int fd) : _fd(fd)
 	_realname = "";
 	_buffer = "";
 	_passOk = false;
-	// _registered = false;
 }
-// Client::~Client() {}
+
+Client::~Client()
+{
+
+}
 
 // Getters
 int Client::get_fd() const
@@ -29,7 +32,7 @@ std::string Client::getUsername() const
 
 bool Client::isRegistered() const
 {
-	return _passOk && !_nickname.empty() && !_username.empty();
+	return ( _passOk && !_nickname.empty() && !_username.empty() );
 }
 
 std::string Client::getIP() const
@@ -48,7 +51,8 @@ bool Client::isPassOk() const
 	return _passOk;
 }
 
-std::string Client::getBuffer() const {
+std::string Client::getBuffer() const 
+{
 	return _buffer;
 }
 
@@ -78,55 +82,6 @@ void Client::setRealname(std::string real)
 void Client::setPassOk(bool ok)
 {
 	_passOk = ok;
-}
-Client::~Client()
-{
-
-}
-
-// bool Client::isNicknameTaken(std::string nickname)
-// {
-// 	for (int i = 1; i < g_num_fds; i++)
-// 	{
-// 		if (this->getNickname() == nickname)
-// 			return true;
-// 	}
-// 	return false;
-// }
-
-bool pars_nick(std::string _nickname)
-{
-	// Nickname must start with a letter or special character
-	if (isalpha_string(_nickname))
-		return true;
-
-	// // Check each character in the nickname
-	// for (size_t i = 1; i < _nickname.length(); ++i)
-	// {
-	// 	char c = _nickname[i];
-	// 	if (!isalnum(c) && !strchr("[]\\`_^{|}-", c))
-	// 		return true;
-	// }
-
-	return false;
-}
-void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
-{
-	// Close the connection
-	close(fds[index].fd);
-	
-	// Delete the Client object
-	delete clients[index];
-	clients[index] = NULL;
-	
-	// Shift both arrays
-	for (int i = index; i < num_fds - 1; i++) {
-		fds[i] = fds[i + 1];
-		clients[i] = clients[i + 1];
-	}
-	
-	// Decrease count
-	num_fds--;
 }
 
 void Client::setIP(std::string ip)

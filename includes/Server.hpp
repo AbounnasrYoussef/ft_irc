@@ -18,7 +18,6 @@ extern int g_num_fds;
 
 void sendError(int fd, const std::string& msg);
 bool isalpha_string(std::string str);
-void processCommand(Client* client, std::string message);
 
 class Server {
 	private:
@@ -47,7 +46,8 @@ class Server {
 	
 	// Message handling
 	// void processCommand(Client* client, std::string message);
-	void broadcastToChannel(std::string channelName, std::string message, Client* sender);
+	// void broadcastToChannel(std::string channelName, std::string message, Client* sender);
+	void processCommand(int index, std::string message);
 	
 	// Utilities
 	Client* getClientByNick(std::string nickname);

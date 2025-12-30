@@ -27,6 +27,6 @@ int main(int ac, char **av)
 
 	Server ser(std::atoi(av[1]), av[2]);
 	ser.start();
-	
+
 	return 0;
 }

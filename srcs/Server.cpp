@@ -26,144 +26,6 @@ Server::~Server()
 	close(this->server_Fd);
 }
 
-bool split(const std::string &s, char delimiter, std::string &left, std::string &right)
-{
-    std::string::size_type pos = s.find(delimiter);
-
-    if (pos == std::string::npos)
-        return false;
-
-    left = s.substr(0, pos);
-    right = s.substr(pos + 1);
-
-    return !left.empty() && !right.empty();
-}
-
-void sendError(int fd, const std::string& msg)
-{
-	if (send(fd, msg.c_str(), msg.length(), 0) == -1)
-		write(2, "Error sending data to client.\n", 30);
-}
-
-bool isalpha_string(std::string str)
-{
-	for (size_t i = 0; i < str.length(); ++i)
-	{
-		if (!isalpha(str[i]))
-			return false;
-	}
-	return true;
-}
-
-// bool user_parsing(std::string argument, Client* client)
-// {
-// 	size_t count = 0;
-// 	for (size_t i = 0; i < argument.length(); ++i)
-// 	{
-// 		if (argument[i] == ' ')
-// 			count++;
-// 	}
-// 	if (count != 3)
-// 		return false;
-// 	// USER <username> <hostname> <servername> :<realname>
-// 	std::string username, hostname, servername, realname;
-// 	size_t first_space = argument.find(' ');
-// 	if (first_space == std::string::npos)
-// 		return false;
-// 	username = argument.substr(0, first_space);
-// 	argument = argument.substr(first_space + 1);
-
-// 	size_t second_space = argument.find(' ');
-// 	if (second_space == std::string::npos)
-// 		return false;
-// 	hostname = argument.substr(0, second_space);
-// 	argument = argument.substr(second_space + 1);
-
-// 	size_t third_space = argument.find(' ');
-// 	if (third_space == std::string::npos)
-// 		return false;
-// 	servername = argument.substr(0, third_space);
-// 	argument = argument.substr(third_space + 1);
-
-// 	if (argument[0] != ':')
-// 		return false;
-// 	realname = argument.substr(1);
-
-// 	client->setUsername(username);
-// 	client->setRealname(realname);
-// 	// client->setRegistered(true);
-// 	return true;
-// }
-#include <sstream> // for iss
-std::string getClientIP(const sockaddr_storage &addr, socklen_t len) // i nedd learn from here this function 
-{
-	char host[NI_MAXHOST];
-
-	if (getnameinfo((const sockaddr*)&addr, len, host, sizeof(host), NULL, 0, NI_NUMERICHOST) == 0)
-	{
-		return std::string(host);
-	}
-	return std::string();
-}
-
-
-bool user_parsing(const std::string& argument, Client* client) // need learn for this fuction
-{
-    // 1) realname must start with ':'
-    size_t colonPos = argument.find(" :");
-    if (colonPos == std::string::npos)
-        return false;
-
-    // 2) split into "before :" and "realname"
-    std::string before = argument.substr(0, colonPos);
-    std::string realname = argument.substr(colonPos + 2);
-
-    if (realname.empty())
-        return false;
-
-    // 3) split the part before ':' into tokens
-    std::istringstream iss(before);
-    std::string username, hostname, servername;
-
-    if (!(iss >> username >> hostname >> servername))
-        return false;
-
-    // 4) store values
-    client->setUsername(username);
-    client->setRealname(realname);
-
-    return true;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Server::Server(int port, std::string password)
 {
 	this->port = port;
@@ -190,7 +52,6 @@ void Server::setupSocket()
 	this->_fds[0].fd = this->server_Fd;
 	this->_fds[0].events = POLLIN;
 	// int g_num_fds = 1;
-	
 }
 
 
@@ -217,7 +78,7 @@ void Server::handle_ClientData(int index)
 {
 	//  Process client messages
 
-	std::cout << this->clients[g_num_fds - 1]->getIP()  << std::endl;
+	std::cout << this->clients[g_num_fds - 1]->getIP()  << std::endl; // for debug
 	for (int i = 1; i < g_num_fds; i++)
 	{
 		if (this->_fds[i].revents & POLLIN)
@@ -258,7 +119,7 @@ void Server::handle_ClientData(int index)
 
 					write(this->_fds[i].fd, "Message received: ", 18);
 				}
-				// processCommand(this->clients[i], full_Buffer); // handle after is commenands success
+				// processCommand(i, full_Buffer); // handle after is commenands success
 				// Successfully processed command
 				// if (massage_complet(this->clients[i]->getBuffer()))
 				// {
@@ -274,7 +135,6 @@ void Server::handle_ClientData(int index)
 
 void Server::start()
 {
-	// Server obj;
 	setupSocket();
 	while(true)
 	{
