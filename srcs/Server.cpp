@@ -207,7 +207,8 @@ void Server::accept_NewClient()
 	this->_fds[g_num_fds].fd = client_fd;
 	this->_fds[g_num_fds].events = POLLIN;
 	this->clients[g_num_fds] = new Client(client_fd);
-
+	this->clients[g_num_fds]->setIP(ip); // set ip of client
+	
 	g_num_fds++; // add to array
 }
 
@@ -216,6 +217,7 @@ void Server::handle_ClientData(int index)
 {
 	//  Process client messages
 
+	std::cout << this->clients[g_num_fds - 1]->getIP()  << std::endl;
 	for (int i = 1; i < g_num_fds; i++)
 	{
 		if (this->_fds[i].revents & POLLIN)
@@ -245,6 +247,7 @@ void Server::handle_ClientData(int index)
 				this->clients[i]->appendBuffer(std::string(this->buffer));
 				std::string full_Buffer = this->clients[i]->getBuffer(); // 
 				size_t pos;
+				std::cout << this->buffer << std::endl; // for debug
 				while((pos = full_Buffer.find("\r\n")) != std::string::npos)
 				{
 					std::string message = full_Buffer.substr(0, pos);

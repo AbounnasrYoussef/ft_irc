@@ -43,6 +43,7 @@ class Client {
 		void setNickname(std::string nick);
 		void setUsername(std::string user);
 		void setRealname(std::string real);
+		void setIP(std::string ip);
 		void setPassOk(bool ok);
 		// void setRegistered(bool reg); no need
 		// Buffer management

@@ -128,3 +128,8 @@ void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int inde
 	// Decrease count
 	num_fds--;
 }
+
+void Client::setIP(std::string ip)
+{
+	this->_ip = ip;
+}
