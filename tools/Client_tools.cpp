@@ -100,3 +100,7 @@ bool pars_nick(std::string _nickname)
 	return false;
 }
 
+std::string& Client::getMutableBuffer()
+{
+    return this->_buffer;
+}

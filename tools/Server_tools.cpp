@@ -82,11 +82,11 @@ void Server::processCommand(int index, std::string message)
 		else if (command == "USER")
 		{
 			// 1) USER after full registration is forbidden
-			if (this->clients[index]->isRegistered())
-			{
-				sendError(this->clients[index]->get_fd(), "server 462 : You may not reregister\r\n");
-				return;
-			}
+			// if (this->clients[index]->isRegistered())
+			// {
+			// 	sendError(this->clients[index]->get_fd(), "server 462 : You may not reregister\r\n");
+			// 	return;
+			// }
 
 			// 2) PASS must be done first
 			if (!this->clients[index]->isPassOk())

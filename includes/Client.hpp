@@ -48,6 +48,7 @@ class Client {
 		// void setRegistered(bool reg); no need
 		// Buffer management
 		void appendBuffer(std::string const data);
+		std::string& getMutableBuffer();
 		// bool isNicknameTaken(std::string nickname);
 		// void clearBuffer();
 };

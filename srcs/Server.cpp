@@ -86,65 +86,104 @@ void Server::accept_NewClient()
 }
 
 
+// void Server::handle_ClientData(int index)
+// {
+// 	//  Process client messages
+
+// 	std::cout << this->clients[index]->getIP()  << std::endl; // for debug
+// 	// for (int i = 1; i < g_num_fds; i++)
+// 	// {
+// 		chae
+// 		if (this->_fds[i].revents & POLLIN)
+// 		{
+// 			// char buffer[512];
+// 			int bytes = read(this->_fds[i].fd, this->buffer, 512);
+
+// 			if (bytes == 0)
+// 			{
+// 				// Client disconnected
+// 				write(2, "Client is diconnected Goodbye!\n", 32);
+// 				removeClient(this->_fds, clients, g_num_fds, i);
+// 			}
+
+// 			if (bytes == -1)
+// 			{
+// 				// Error reading - close connection
+// 				std::cerr << "read from client failed" << std::endl;
+// 				close(this->_fds[i].fd);
+// 				// clean up client
+// 			}
+
+// 			// else
+// 			// {
+// 			// 	this->buffer[bytes] = '\0';
+// 			// 	// this->clients[i]->appendBuffer(buffer);
+// 			// 	this->clients[i]->appendBuffer(std::string(this->buffer));
+// 			// 	std::string full_Buffer = this->clients[i]->getBuffer(); // 
+// 			// 	size_t pos;
+// 			// 	std::cout << this->buffer << std::endl; // for debug
+// 			// 	while((pos = full_Buffer.find("\r\n")) != std::string::npos)
+// 			// 	{
+// 			// 		std::string message = full_Buffer.substr(0, pos);
+// 			// 		full_Buffer = full_Buffer.substr(pos + 2);
+// 			// 	}
+// 			// 	processCommand(i, full_Buffer); // handle after is commenands success
+// 			// 	// Successfully processed command
+// 			// 	// if (massage_complet(this->clients[i]->getBuffer()))
+// 			// 	// {
+// 			// 	// 	// message commplet 
+// 			// 	// }
+
+// 			// }
+// 		}
+// 	// }
+// }
+
 void Server::handle_ClientData(int index)
 {
-	//  Process client messages
+    char buf[512];
+    int bytes = read(this->_fds[index].fd, buf, sizeof(buf));
 
-	std::cout << this->clients[g_num_fds - 1]->getIP()  << std::endl; // for debug
-	for (int i = 1; i < g_num_fds; i++)
-	{
-		if (this->_fds[i].revents & POLLIN)
-		{
-			// char buffer[512];
-			int bytes = read(this->_fds[i].fd, this->buffer, 512);
+    // 1) Client disconnected
+    if (bytes == 0)
+    {
+        std::cerr << "Client disconnected: "
+                  << this->clients[index]->getIP() << std::endl;
+        removeClient(this->_fds, this->clients, g_num_fds, index);
+        return;
+    }
 
-			if (bytes == 0)
-			{
-				// Client disconnected
-				write(2, "Client is diconnected Goodbye!\n", 32);
-				removeClient(this->_fds, clients, g_num_fds, i);
-				continue;
-			}
+    // 2) Read error
+    if (bytes < 0)
+    {
+        // Non-blocking: EAGAIN / EWOULDBLOCK are NOT errors
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+        {
+            std::cerr << "Read error from client: "
+                      << this->clients[index]->getIP() << std::endl;
+            removeClient(this->_fds, this->clients, g_num_fds, index);
+        }
+        return;
+    }
 
-			if (bytes == -1)
-			{
-				// Error reading - close connection
-				write(2, "Error reading data. Closing connection.\n", 41);
-				close(this->_fds[i].fd);
-				// TODO: Remove from array
-			}
-			else
-			{
-				this->buffer[bytes] = '\0';
-				// this->clients[i]->appendBuffer(buffer);
-				this->clients[i]->appendBuffer(std::string(this->buffer));
-				std::string full_Buffer = this->clients[i]->getBuffer(); // 
-				size_t pos;
-				std::cout << this->buffer << std::endl; // for debug
-				while((pos = full_Buffer.find("\r\n")) != std::string::npos)
-				{
-					std::string message = full_Buffer.substr(0, pos);
-					full_Buffer = full_Buffer.substr(pos + 2);
-					// std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
-					
-					// handl commands and parse(PASS, NICK ,USER)
+    // 3) Append received data to client buffer
+    buf[bytes] = '\0';
+    this->clients[index]->appendBuffer(std::string(buf));
 
-					// write(this->_fds[i].fd, "Message received: ", 18);
-					// send(this->_fds[i].fd, "Message received: ", 19, 0);
-				}
-				processCommand(i, full_Buffer); // handle after is commenands success
-				// Successfully processed command
-				// if (massage_complet(this->clients[i]->getBuffer()))
-				// {
-				// 	// message commplet 
-				// }
-				// parse message
-				// Process message
-				// write(this->_fds[i].fd, "Hello from server!\n", 19);
-			}
-		}
-	}
+    // 4) Process complete commands (\r\n terminated)
+    std::string& clientBuffer = this->clients[index]->getMutableBuffer();
+    size_t pos;
+
+    while ((pos = clientBuffer.find("\r\n")) != std::string::npos)
+    {
+        std::string command = clientBuffer.substr(0, pos);
+        clientBuffer.erase(0, pos + 2); // remove processed command
+
+        // Handle ONE command at a time
+        processCommand(index, command);
+    }
 }
+
 
 void Server::start()
 {
