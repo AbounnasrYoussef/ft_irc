@@ -4,7 +4,7 @@ CC = c++
 
 CFLAGS = #-Wall -Wextra -Werror -std=c++98
 
-SRC = main.cpp srcs/Server.cpp srcs/Client.cpp tools/Client_tools.cpp
+SRC = main.cpp srcs/Server.cpp srcs/Client.cpp tools/Client_tools.cpp tools/Server_tools.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

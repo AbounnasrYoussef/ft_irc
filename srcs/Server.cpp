@@ -119,7 +119,7 @@ void Server::handle_ClientData(int index)
 
 					write(this->_fds[i].fd, "Message received: ", 18);
 				}
-				// processCommand(i, full_Buffer); // handle after is commenands success
+				processCommand(i, full_Buffer); // handle after is commenands success
 				// Successfully processed command
 				// if (massage_complet(this->clients[i]->getBuffer()))
 				// {
@@ -127,7 +127,7 @@ void Server::handle_ClientData(int index)
 				// }
 				// parse message
 				// Process message
-				write(this->_fds[i].fd, "Hello from server!\n", 19);
+				// write(this->_fds[i].fd, "Hello from server!\n", 19);
 			}
 		}
 	}

@@ -37,7 +37,7 @@ void Server::processCommand(int index, std::string message)
 			}
 
 			// wrong password
-			if (argument != this->clients[index]->_password)
+			if (argument != this->password)
 			{
 				sendError(this->clients[index]->get_fd(), "server 464 : Password incorrect\r\n");
 				return;
@@ -48,6 +48,7 @@ void Server::processCommand(int index, std::string message)
 		}
 		else if (command == "NICK")
 		{
+			std::cout << "Processing NICK command with argument: " << argument << std::endl; // Debug line
 			if (!this->clients[index]->isPassOk())
 			{
 				sendError(this->clients[index]->get_fd(), "server 451 : You have not registered\r\n");
@@ -58,8 +59,8 @@ void Server::processCommand(int index, std::string message)
 				sendError(this->clients[index]->get_fd(), "server 431 : No nickname given\r\n");
 				return;
 			}
-			// Check if nickname is already in use
-			if (isNicknameTaken(argument))
+			// Check if nickname is already in use (excluding current client)
+			if (isNicknameTaken(argument, index))
 			{
 				sendError(this->clients[index]->get_fd(), "server 433 " + argument + " : Nickname is already in use\r\n");
 				return ;
@@ -70,6 +71,12 @@ void Server::processCommand(int index, std::string message)
 				return ;
 			}
 			this->clients[index]->setNickname(argument);
+			
+			// Check if registration is now complete (USER was already done)
+			if (this->clients[index]->isRegistered())
+			{
+				sendError(this->clients[index]->get_fd(), "server 001 " + this->clients[index]->getNickname() + " : Welcome to the Internet Relay Network\r\n");
+			}
 		}
 		else if (command == "USER")
 		{
@@ -111,7 +118,7 @@ void Server::processCommand(int index, std::string message)
 	}
 	else
 	{
-		this->clients[index]->setPassOk(false);
+		// this->clients[index]->setPassOk(false);    
 		sendError(this->clients[index]->get_fd(), "server 421 " + command + " : Unknown command\r\n");
 		
 		// Invalid command format
@@ -126,11 +133,11 @@ void sendError(int fd, const std::string& msg)
 		write(2, "Error sending data to client.\n", 30);
 }
 
-bool Server::isNicknameTaken(std::string nickname)
+bool Server::isNicknameTaken(std::string nickname, int excludeIndex)
 {
 	for (int i = 1; i < g_num_fds; i++) {
-		if (this->clients[i] && this->clients[i]->getNickname() == nickname) {
-			return true;  // Found a match!
+		if (this->clients[i] && i != excludeIndex && this->clients[i]->getNickname() == nickname) {
+			return true;  // Found a match in another client!
 		}
 	}
 	return false;  // Not taken
