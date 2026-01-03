@@ -15,7 +15,9 @@
 
 class Client;
 extern int g_num_fds;
+extern bool g_running;
 
+void signalHandler(int signum);
 void sendError(int fd, const std::string& msg);
 bool isalpha_string(std::string str);
 

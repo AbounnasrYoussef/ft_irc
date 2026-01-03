@@ -107,6 +107,7 @@ void Server::processCommand(int index, std::string message)
 				sendError(this->clients[index]->get_fd(), "server 001 " + this->clients[index]->getNickname() + " : Welcome to the Internet Relay Network\r\n");
 			}
 		}
+		
 		//  add more commands here like JOIN, PART, PRIVMSG, etc. use cmmand and argument variables
 	}
 	else

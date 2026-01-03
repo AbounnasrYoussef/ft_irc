@@ -89,7 +89,7 @@ void Server::handle_ClientData(int index)
 			if (bytes == 0)
 			{
 				// Client disconnected
-				write(this->_fds[i].fd, "Client is diconnected Goodbye!\n", 9);
+				write(2, "Client is diconnected Goodbye!\n", 32);
 				removeClient(this->_fds, clients, g_num_fds, i);
 				continue;
 			}
@@ -113,13 +113,14 @@ void Server::handle_ClientData(int index)
 				{
 					std::string message = full_Buffer.substr(0, pos);
 					full_Buffer = full_Buffer.substr(pos + 2);
-					std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
+					// std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
 					
 					// handl commands and parse(PASS, NICK ,USER)
 
-					write(this->_fds[i].fd, "Message received: ", 18);
+					// write(this->_fds[i].fd, "Message received: ", 18);
+					// send(this->_fds[i].fd, "Message received: ", 19, 0);
 				}
-				// processCommand(i, full_Buffer); // handle after is commenands success
+				processCommand(i, full_Buffer); // handle after is commenands success
 				// Successfully processed command
 				// if (massage_complet(this->clients[i]->getBuffer()))
 				// {
@@ -127,6 +128,7 @@ void Server::handle_ClientData(int index)
 				// }
 				// parse message
 				// Process message
+				// if (this->clients[i]->isRegistered())
 				write(this->_fds[i].fd, "Hello from server!\n", 19);
 			}
 		}
@@ -136,13 +138,15 @@ void Server::handle_ClientData(int index)
 void Server::start()
 {
 	setupSocket();
-	while(true)
+	while(g_running)
 	{
 		int ret = poll(this->_fds, g_num_fds, -1);  // -1 = wait forever
 		if (ret == -1)
 		{
 			// Error - clean up and exit
-			exit(0);
+			perror("poll failed");
+			// exit(0);
+			return;
 		}
 		if(ret > 0)
 		{

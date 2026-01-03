@@ -11,9 +11,26 @@
 #include "includes/Server.hpp"
 
 int g_num_fds = 1;
+bool g_running = true;
 
+void f()
+{
+    system("leaks ircserv");
+}
+
+void signalHandler(int signum)
+{
+    if (signum == SIGINT)  // Ctrl+C
+    {
+        std::cout << "\nShutting down server..." << std::endl;
+        g_running = false;  // Tell main loop to exit
+    }
+}
 int main(int ac, char **av)
 {
+
+	signal(SIGINT, signalHandler);
+
 	if (ac != 3)
 	{
 		std::cerr << "Usage: " << av[0] << " <PORT>"  << " <PASSWORD>" << std::endl;
@@ -27,6 +44,7 @@ int main(int ac, char **av)
 
 	Server ser(std::atoi(av[1]), av[2]);
 	ser.start();
-
+	// atexit(f);
+	
 	return 0;
 }
