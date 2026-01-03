@@ -128,8 +128,12 @@ void Server::handle_ClientData(int index)
 				// }
 				// parse message
 				// Process message
+<<<<<<< HEAD
 				// if (this->clients[i]->isRegistered())
 				write(this->_fds[i].fd, "Hello from server!\n", 19);
+=======
+				// write(this->_fds[i].fd, "Hello from server!\n", 19);
+>>>>>>> fc2d1666ee6677310ef953c7454ea7c9eba73589
 			}
 		}
 	}

@@ -53,7 +53,7 @@ class Server {
 	
 	// Utilities
 	Client* getClientByNick(std::string nickname);
-	bool isNicknameTaken(std::string nickname);
+	bool isNicknameTaken(std::string nickname, int excludeIndex);
 };
 
 
