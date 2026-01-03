@@ -44,7 +44,11 @@ int main(int ac, char **av)
 
 	Server ser(std::atoi(av[1]), av[2]);
 	ser.start();
-	// atexit(f);
+	atexit(f);
+	while (1)
+	{
+		/* code */
+	}
 	
 	return 0;
 }

@@ -38,20 +38,32 @@ void Server::setupSocket()
 	// this->_
 	// this->_serverFd
 	this->server_Fd = socket(AF_INET, SOCK_STREAM, 0); // buffering tcp create
-
+	if (this->server_Fd == -1)
+	{
+		perror("Socket creation failed");
+		exit(1); // need to handle error properly clean up
+	}
+	if (fcntl(this->server_Fd, F_SETFL, O_NONBLOCK) == -1)
+	{
+		perror("Failed to set non-blocking mode");
+		exit(1); // need to handle error properly clean up
+	}
 	// 2. Bind to port 
 	struct sockaddr_in address;   /// socket(ip:port) for this process 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(this->port);
-	bind(this->server_Fd, (struct sockaddr*)&address, sizeof(address));
-	
+	if (bind(this->server_Fd, (struct sockaddr*)&address, sizeof(address)) == -1)
+	{
+		perror("Bind failed");
+		exit(1); // need to handle error properly clean up
+	}
+
 	// 3. Start listening
 	listen(this->server_Fd, 3); // am ready to accept connections (work) (10.50.20.7:6667)
 	// this->_fds[MAX_CLIENTS];
 	this->_fds[0].fd = this->server_Fd;
 	this->_fds[0].events = POLLIN;
-	// int g_num_fds = 1;
 }
 
 
@@ -61,7 +73,7 @@ void Server::accept_NewClient()
 	socklen_t len = sizeof(client_addr);
 
 	int client_fd = accept(this->server_Fd, (sockaddr*)&client_addr, &len);
-
+	fcntl(client_fd, F_SETFL, O_NONBLOCK); // set non blocking mode
 	std::string ip = getClientIP(client_addr, len);
 	// Add new client to our monitoring list
 
@@ -128,12 +140,7 @@ void Server::handle_ClientData(int index)
 				// }
 				// parse message
 				// Process message
-<<<<<<< HEAD
-				// if (this->clients[i]->isRegistered())
-				write(this->_fds[i].fd, "Hello from server!\n", 19);
-=======
 				// write(this->_fds[i].fd, "Hello from server!\n", 19);
->>>>>>> fc2d1666ee6677310ef953c7454ea7c9eba73589
 			}
 		}
 	}
@@ -169,6 +176,17 @@ void Server::start()
 					handle_ClientData(i);
 				}
 			}
+		}
+	}
+	if (g_running == false)
+	{
+		// Clean up before exiting
+		close(this->server_Fd);
+		write(2, "Server test dowrn \n", 20);
+		for (int i = 0; i < g_num_fds; i++)
+		{
+			close(this->_fds[i].fd);
+			delete this->clients[i];
 		}
 	}
 	

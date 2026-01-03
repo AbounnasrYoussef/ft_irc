@@ -12,6 +12,7 @@
 #include <sys/socket.h>  // sockaddr, sockaddr_storage
 #include <netinet/in.h>  // sockaddr_in, sockaddr_in6
 #include <arpa/inet.h>   // AF_INET, AF_INET6
+#include <fcntl.h>
 
 class Client;
 extern int g_num_fds;

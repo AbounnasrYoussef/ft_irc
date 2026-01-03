@@ -11,6 +11,7 @@ void Server::processCommand(int index, std::string message)
 
 	if (split(message, ' ', command, argument))
 	{
+		command = command + "\n";
 	
 		if (command == "PASS")
 		{
