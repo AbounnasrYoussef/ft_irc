@@ -52,6 +52,8 @@ class Server {
 	// Utilities
 	Client* getClientByNick(std::string nickname);
 	bool isNicknameTaken(std::string nickname, int excludeIndex);
+	bool check_passok(std::string command, std::string argument, int index);
+	bool check_authentication(std::string command, std::string argument, int index);
 };
 
 

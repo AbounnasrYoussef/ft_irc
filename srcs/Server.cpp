@@ -160,6 +160,13 @@ void Server::start()
 				{
 					handle_ClientData(i);
 				}
+				else if (this->_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
+				{
+					// Client disconnected or error
+					removeClient(this->_fds, clients, g_num_fds, i);
+					close(this->_fds[i].fd);
+					i--; // Adjust index after removal
+				}
 			}
 		}
 	}
