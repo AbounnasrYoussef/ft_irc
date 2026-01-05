@@ -37,8 +37,9 @@ void Server::setupSocket()
 {
 	// this->_
 	// this->_serverFd
+	int pp = 1;
 	this->server_Fd = socket(AF_INET, SOCK_STREAM, 0); // buffering tcp create
-
+    setsockopt(this->server_Fd, SOL_SOCKET, SO_REUSEADDR, &pp, sizeof(int)); // to reuse address immediately after close
 	// 2. Bind to port 
 	struct sockaddr_in address;   /// socket(ip:port) for this process 
 	address.sin_family = AF_INET;
