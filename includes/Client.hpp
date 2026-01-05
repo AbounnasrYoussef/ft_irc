@@ -11,7 +11,7 @@ std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
 // bool massage_complet(std::string buffer);
 bool user_parsing(const std::string& argument, Client* client);
 bool pars_nick(std::string _nickname);
-bool split(const std::string &s, char delimiter, std::string &left, std::string &right);
+bool split(std::string &s, char delimiter, std::string &left, std::string &right);
 
 class Client {
 	private:
@@ -48,8 +48,9 @@ class Client {
 		// void setRegistered(bool reg); no need
 		// Buffer management
 		void appendBuffer(std::string const data);
+		void clearBuffer();
+		void setBuffer(std::string const data);
 		// bool isNicknameTaken(std::string nickname);
-		// void clearBuffer();
 };
 
 #endif

@@ -47,7 +47,7 @@ class Server {
 	// Message handling
 	// void processCommand(Client* client, std::string message);
 	// void broadcastToChannel(std::string channelName, std::string message, Client* sender);
-	void processCommand(int index, std::string message);
+	void processCommand(int index, std::string &message);
 	
 	// Utilities
 	Client* getClientByNick(std::string nickname);

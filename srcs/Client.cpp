@@ -88,3 +88,13 @@ void Client::setIP(std::string ip)
 {
 	this->_ip = ip;
 }
+
+void Client::clearBuffer()
+{
+	_buffer.clear();
+}
+
+void Client::setBuffer(std::string const data)
+{
+	_buffer = data;
+}
