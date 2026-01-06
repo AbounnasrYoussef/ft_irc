@@ -29,7 +29,7 @@ Server::~Server()
 Server::Server(int port, std::string password)
 {
 	this->port = port;
-	this->password = password;
+	this->password = password; // add \r\n to password for comparison
 	this->server_Fd = -1;
 }
 
@@ -37,8 +37,9 @@ void Server::setupSocket()
 {
 	// this->_
 	// this->_serverFd
+	int pp = 1;
 	this->server_Fd = socket(AF_INET, SOCK_STREAM, 0); // buffering tcp create
-
+    setsockopt(this->server_Fd, SOL_SOCKET, SO_REUSEADDR, &pp, sizeof(int)); // to reuse address immediately after close
 	// 2. Bind to port 
 	struct sockaddr_in address;   /// socket(ip:port) for this process 
 	address.sin_family = AF_INET;
@@ -76,60 +77,64 @@ void Server::accept_NewClient()
 
 void Server::handle_ClientData(int index)
 {
-	//  Process client messages
+	//  Process client messages for the specific client at index
 
-	std::cout << this->clients[g_num_fds - 1]->getIP()  << std::endl; // for debug
-	for (int i = 1; i < g_num_fds; i++)
+	if (this->_fds[index].revents & POLLIN)
 	{
-		if (this->_fds[i].revents & POLLIN)
+		int bytes = read(this->_fds[index].fd, this->buffer, 511); // Read max 511 to leave room for null terminator
+
+		if (bytes == 0)
 		{
-			// char buffer[512];
-			int bytes = read(this->_fds[i].fd, this->buffer, 512);
+			// Client disconnected
+			removeClient(this->_fds, clients, g_num_fds, index);
+			return;
+		}
 
-			if (bytes == 0)
-			{
-				// Client disconnected
-				write(this->_fds[i].fd, "Client is diconnected Goodbye!\n", 9);
-				removeClient(this->_fds, clients, g_num_fds, i);
-				continue;
-			}
+		if (bytes == -1)
+		{
+			// Error reading - close connection
+			write(2, "Error reading data. Closing connection.\n", 41);
+			close(this->_fds[index].fd);
+			removeClient(this->_fds, clients, g_num_fds, index);
+			return;
+		}
 
-			if (bytes == -1)
+		// Null terminate the buffer
+		this->buffer[bytes] = '\0';
+		
+		// Append new data to client's buffer
+		this->clients[index]->appendBuffer(std::string(this->buffer, bytes));
+		
+		// Get the full buffer and process complete messages
+		std::string full_Buffer = this->clients[index]->getBuffer();
+		size_t pos;
+		
+		// Process all complete messages (ending with \r\n)
+		while((pos = full_Buffer.find("\r\n")) != std::string::npos)
+		{
+			// Extract complete message
+			std::string message = full_Buffer.substr(0, pos);
+			
+			// Remove processed message from buffer
+			full_Buffer = full_Buffer.substr(pos + 2);
+			
+			// Process the complete message
+			if (!message.empty())
 			{
-				// Error reading - close connection
-				write(2, "Error reading data. Closing connection.\n", 41);
-				close(this->_fds[i].fd);
-				// TODO: Remove from array
-			}
-			else
-			{
-				this->buffer[bytes] = '\0';
-				// this->clients[i]->appendBuffer(buffer);
-				this->clients[i]->appendBuffer(std::string(this->buffer));
-				std::string full_Buffer = this->clients[i]->getBuffer(); // 
-				size_t pos;
-				std::cout << this->buffer << std::endl; // for debug
-				while((pos = full_Buffer.find("\r\n")) != std::string::npos)
+				// std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
+				int i = 1;
+				while (!message.empty())
 				{
-					std::string message = full_Buffer.substr(0, pos);
-					full_Buffer = full_Buffer.substr(pos + 2);
-					std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
-					
-					// handl commands and parse(PASS, NICK ,USER)
+					// std::cout << "number " << i << "[" << message << "]" << std::endl; // Debug line
+					processCommand(index, message);
 
-					write(this->_fds[i].fd, "Message received: ", 18);
 				}
-				// processCommand(i, full_Buffer); // handle after is commenands success
-				// Successfully processed command
-				// if (massage_complet(this->clients[i]->getBuffer()))
-				// {
-				// 	// message commplet 
-				// }
-				// parse message
-				// Process message
-				write(this->_fds[i].fd, "Hello from server!\n", 19);
+				
 			}
 		}
+		
+		// Update client's buffer with remaining unprocessed data
+		this->clients[index]->setBuffer(full_Buffer);
 	}
 }
 
@@ -159,6 +164,13 @@ void Server::start()
 				if (this->_fds[i].revents & POLLIN)
 				{
 					handle_ClientData(i);
+				}
+				else if (this->_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
+				{
+					// Client disconnected or error
+					removeClient(this->_fds, clients, g_num_fds, i);
+					close(this->_fds[i].fd);
+					i--; // Adjust index after removal
 				}
 			}
 		}

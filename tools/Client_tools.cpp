@@ -58,17 +58,43 @@ bool user_parsing(const std::string& argument, Client* client) // need learn for
 	return true;
 }
 
-bool split(const std::string &s, char delimiter, std::string &left, std::string &right)
+bool split(std::string &s, char delimiter, std::string &left, std::string &right)
 {
-    std::string::size_type pos = s.find(delimiter);
+	size_t pos = s.find('\n');
+	size_t pos_space = s.find(' ');
+	std::string tmp;
 
-    if (pos == std::string::npos)
-        return false;
+	if (pos == std::string::npos)
+	{
+		if (pos_space == std::string::npos)
+		{
+			return false;
+		}
+		else
+		{
+			tmp = s;
+			tmp = s.substr(0, pos);
+			std::string copy = s.substr(pos + 1);
+			s = copy;
+			left = tmp.substr(0, pos_space);
+			right = tmp.substr(pos_space + 1);
+			s = "";
+			return (!left.empty() && !right.empty());
+		}
+	}
 
-    left = s.substr(0, pos);
-    right = s.substr(pos + 1);
+	tmp = s;
+	tmp = s.substr(0, pos);
+	std::string copy = s.substr(pos + 1);
+	s = copy;
+	pos = tmp.find(' ');
 
-    return !left.empty() && !right.empty();
+	if (pos == std::string::npos)
+		return false;
+
+	left = tmp.substr(0, pos);
+	right = tmp.substr(pos + 1);
+	return (!left.empty() && !right.empty());
 }
 
 
@@ -85,17 +111,8 @@ bool isalpha_string(std::string str)
 
 bool pars_nick(std::string _nickname)
 {
-	// Nickname must start with a letter or special character
 	if (isalpha_string(_nickname))
 		return true;
-
-	// // Check each character in the nickname
-	// for (size_t i = 1; i < _nickname.length(); ++i)
-	// {
-	// 	char c = _nickname[i];
-	// 	if (!isalnum(c) && !strchr("[]\\`_^{|}-", c))
-	// 		return true;
-	// }
 
 	return false;
 }
