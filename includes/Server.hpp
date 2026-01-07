@@ -2,7 +2,9 @@
 #define SERVER_HPP
 
 #include <iostream>
-# define MAX_CLIENTS 10
+# define MAX_CLIENTS 10 
+
+
 
 #include <sys/socket.h>
 #include <unistd.h>

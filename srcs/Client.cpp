@@ -7,7 +7,9 @@ Client::Client(int fd) : _fd(fd)
 	_realname = "";
 	_buffer = "";
 	_passOk = false;
+	_welcomeSent = false;
 }
+
 
 Client::~Client()
 {
@@ -33,6 +35,15 @@ std::string Client::getUsername() const
 bool Client::isRegistered() const
 {
 	return ( _passOk && !_nickname.empty() && !_username.empty() );
+}
+
+bool Client::isWelcomeSent() const
+{
+	return _welcomeSent;
+}
+void Client::setWelcomeSent(bool sent)
+{
+	_welcomeSent = sent;
 }
 
 std::string Client::getIP() const

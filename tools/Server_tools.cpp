@@ -121,25 +121,44 @@ void Server::processCommand(int index, std::string &message)
 			{
 				if (clients[index]->isPassOk() == false)
 				{
-				if (check_passok(command, argument, index))
-				{
-					this->clients[index]->setPassOk(true);
+					if (check_passok(command, argument, index))
+					{
+						this->clients[index]->setPassOk(true);
+						return;
+					}
+					sendError(this->clients[index]->get_fd(), "error clean message buffer\r\n"); // for debug
+					message = "";
 					return;
 				}
-				return;
-			}
 			}
 			if (check_authentication(command, argument, index) == false)
-				return;
-			if (this->clients[index]->isRegistered())
 			{
-				sendError(this->clients[index]->get_fd(), "server 001 " + this->clients[index]->getNickname() + " : Welcome to the Internet Relay Network\r\n");
+				sendError(this->clients[index]->get_fd(), "error clean message buffer\r\n"); // for debug
+				message = "";
+				return;
+			}
+			if (this->clients[index]->isRegistered() && this->clients[index]->isWelcomeSent() == false)
+			{
+			// 	
+            //   "Welcome to the Internet Relay Network
+            //    <nick>!<user>@<host>
+
+				// sendError(this->clients[index]->get_fd(), "pass is > [" + this->password + "]\n" + "nick is > [" + clients[index]->getNickname() + "]\n" 
+				// 	"user is > [" + clients[index]->getUsername() + "]\n"+ "\r\n");
+				// sendError(this->clients[index]->get_fd(), "server 001 " + this->clients[index]->getNickname() + " : Welcome to the Internet Relay Network\r\n");
+					sendError(this->clients[index]->get_fd(),"001 RPL_WELCOME :Welcome to the Internet Relay Network " + 
+						this->clients[index]->getNickname() + "!" + 
+						this->clients[index]->getUsername() + "@" + this->clients[index]->getIP() + "\r\n");
+				this->clients[index]->setWelcomeSent(true);
 			}
 			return;
 		}
 		else if (this->clients[index]->isRegistered() == false)
 		{
+			
 			sendError(this->clients[index]->get_fd(), "451 ERR_NOTREGISTERED : You have not registered\r\n");
+			sendError(this->clients[index]->get_fd(), "error clean message buffer\r\n"); // for debug
+			message = "";
 			return;
 		}
 		//  add more commands here like JOIN, PART, PRIVMSG, etc. use cmmand and argument variables

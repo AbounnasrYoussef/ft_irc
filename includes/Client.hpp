@@ -22,6 +22,7 @@ class Client {
 		std::string _buffer;        // Message buffer (for partial messages)
 		std::string _ip;                // IP of client 
 		bool _passOk;               // Password authenticated?
+		bool _welcomeSent; 		// Welcome message sent?
 		// bool _registered;           // Fully registered? (PASS + NICK + USER) // no need
 		
 	public:
@@ -45,6 +46,8 @@ class Client {
 		void setRealname(std::string real);
 		void setIP(std::string ip);
 		void setPassOk(bool ok);
+		bool isWelcomeSent() const;
+		void setWelcomeSent(bool sent);
 		// void setRegistered(bool reg); no need
 		// Buffer management
 		void appendBuffer(std::string const data);

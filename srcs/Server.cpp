@@ -8,18 +8,8 @@
 #include <sys/socket.h>
 #include "../includes/Client.hpp"
 #include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-// ✔️ khaddam logic dyalo s7i7
+#include "fcntl.h"
 
-// ✔️ multi-client b poll
-
-// ❌ khasso client cleanup
-
-// ❌ khasso error handling
-
-// ❌ khasso limits checks
-
-// add save number of fds in client class
 
 Server::~Server()
 {
@@ -38,36 +28,99 @@ void Server::setupSocket()
 	// this->_
 	// this->_serverFd
 	int pp = 1;
-	this->server_Fd = socket(AF_INET, SOCK_STREAM, 0); // buffering tcp create
-    setsockopt(this->server_Fd, SOL_SOCKET, SO_REUSEADDR, &pp, sizeof(int)); // to reuse address immediately after close
+	this->server_Fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (this->server_Fd == -1)
+	{
+		std::cerr << "Error: Failed to create socket" << std::endl;
+		// Cleanup and exit
+		exit(1);
+	}
+    if (fcntl(this->server_Fd, F_SETFL, O_NONBLOCK) == -1) 
+	{
+		std::cerr << "Error: Failed to set server socket to non-blocking" << std::endl;
+		close(this->server_Fd);
+		// Cleanup and exit
+		exit(1);
+	}
+	if (setsockopt(this->server_Fd, SOL_SOCKET, SO_REUSEADDR, &pp, sizeof(int)) == -1) // to reuse address immediately after close
+	{
+		std::cerr << "Error: Failed setsockopt" << std::endl;
+		close(this->server_Fd);
+		// Cleanup and exit
+		exit(1);
+	} 
 	// 2. Bind to port 
 	struct sockaddr_in address;   /// socket(ip:port) for this process 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(this->port);
-	bind(this->server_Fd, (struct sockaddr*)&address, sizeof(address));
+
+	if (bind(this->server_Fd, (struct sockaddr*)&address, sizeof(address)) == -1)
+	{
+		std::cerr << "Error: Failed to bind to port " << this->port << std::endl;
+		close(this->server_Fd);
+		// Cleanup and exit
+		exit(1);
+	}
 	
 	// 3. Start listening
-	listen(this->server_Fd, 3); // am ready to accept connections (work) (10.50.20.7:6667)
-	// this->_fds[MAX_CLIENTS];
+	if (listen(this->server_Fd, 3) == -1) // am ready to accept connections (work) (10.50.20.7:6667)
+	{
+		std::cerr << "Error: Failed to listen on socket " << this->port << std::endl;
+		close(this->server_Fd);
+		// Cleanup and exit
+		exit(1);
+	}
+	// 4. Initialize pollfd structure
 	this->_fds[0].fd = this->server_Fd;
 	this->_fds[0].events = POLLIN;
-	// int g_num_fds = 1;
+	this->_fds[0].revents = 0;
+	
+	for (int i = 1; i < MAX_CLIENTS + 1; i++)
+	{
+		this->_fds[i].fd = -1;
+		this->_fds[i].events = 0;
+		this->_fds[i].revents = 0;
+	}
 }
 
 
 void Server::accept_NewClient()
 {
+	if (g_num_fds >= MAX_CLIENTS)
+	{
+		// Accept and immediately close to prevent client from waiting
+		sockaddr_storage client_addr;
+		socklen_t len = sizeof(client_addr);
+		int client_fd = accept(this->server_Fd, (sockaddr*)&client_addr, &len);
+		if (client_fd != -1)
+		{
+			sendError(client_fd, "ERROR : Server is full\r\n");
+			close(client_fd);
+		}
+		return;
+	}
 	sockaddr_storage client_addr;
 	socklen_t len = sizeof(client_addr);
 
 	int client_fd = accept(this->server_Fd, (sockaddr*)&client_addr, &len);
-
+	if (client_fd == -1)
+	{
+		// Error accepting new client
+		return;
+	}
+	if (fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1) 
+	{
+		std::cerr << "Error: Failed to set client socket to non-blocking" << std::endl;
+		close(client_fd);
+		return;
+	}
 	std::string ip = getClientIP(client_addr, len);
 	// Add new client to our monitoring list
 
 	this->_fds[g_num_fds].fd = client_fd;
 	this->_fds[g_num_fds].events = POLLIN;
+	this->_fds[g_num_fds].revents = 0;
 	this->clients[g_num_fds] = new Client(client_fd);
 	this->clients[g_num_fds]->setIP(ip); // set ip of client
 	
@@ -119,18 +172,13 @@ void Server::handle_ClientData(int index)
 			full_Buffer = full_Buffer.substr(pos + 2);
 			
 			// Process the complete message
-			if (!message.empty())
-			{
 				// std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
-				int i = 1;
+				// int i = 1;
 				while (!message.empty())
 				{
 					// std::cout << "number " << i << "[" << message << "]" << std::endl; // Debug line
 					processCommand(index, message);
-
 				}
-				
-			}
 		}
 		
 		// Update client's buffer with remaining unprocessed data
