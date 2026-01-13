@@ -53,4 +53,12 @@ class Client {
 		// bool isNicknameTaken(std::string nickname);
 };
 
+struct ParsedMessage {
+    std::string target;      // destinataire
+    std::string message;     // le message
+    bool valid;              // succès du parsing
+    int error_code;          // code d'erreur si !valid
+};
+
+
 #endif

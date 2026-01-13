@@ -149,7 +149,7 @@ void Server::processCommand(int index, std::string &message)
 		{
 			if (command == "PRIVMSG")
 			{
-
+				parse_arguments(argument);
 			}
 			else if (command == "KICK")
 			{
