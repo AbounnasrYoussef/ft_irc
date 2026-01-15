@@ -66,7 +66,5 @@ ParsedMessage parse_arguments(const std::string &argument)
     // }
     result.valid = true;
     return result;
+    
 }
- 
-
-
