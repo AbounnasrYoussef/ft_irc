@@ -58,7 +58,7 @@ ParsedMessage parse_arguments(const std::string &argument)
     // Extraire message (ne pas trim!)
     result.message = argument.substr(pos + 1);
     
-    // rejeter les messages vides
+    // les messages vides
     // if (result.message.empty())
     // {
     //     result.error_code = 412;
