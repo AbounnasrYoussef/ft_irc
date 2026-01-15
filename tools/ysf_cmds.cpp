@@ -64,7 +64,6 @@ ParsedMessage parse_arguments(const std::string &argument)
     //     result.error_code = 412;
     //     return result;
     // }
-    handel_privmsg(result.target, result.message);
     result.valid = true;
     return result;
 }

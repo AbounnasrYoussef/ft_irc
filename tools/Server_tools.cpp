@@ -147,18 +147,8 @@ void Server::processCommand(int index, std::string &message)
 		// youssef part
 		else if( command == "PRIVMSG" || command == "KICK" || command == "MOD")
 		{
-			if (command == "PRIVMSG")
-			{
-				parse_arguments(argument);
-			}
-			else if (command == "KICK")
-			{
-				
-			}
-			else if (command == "MOD")
-			{
-				
-			}
+			parse_arguments(argument);
+			
 		}
 
 	}
