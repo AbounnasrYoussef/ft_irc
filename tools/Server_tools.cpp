@@ -105,7 +105,6 @@ bool Server::check_authentication(std::string command, std::string argument, int
 	return true;
 }
 
-
 void Server::processCommand(int index, std::string &message)
 {
 	std::string command;
