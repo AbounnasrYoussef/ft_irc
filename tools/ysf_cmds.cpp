@@ -14,6 +14,21 @@ void trim(std::string &s)
         s = s.substr(start, end - start + 1);
 }
 
+void handel_privmsg(std::string target, std::string message)
+{
+    int i = 0;
+    if(target[i] == '#' || target[i] == '&')
+    {
+        // donc c'est un channel
+        // 5assni nssay fonction send to channel
+    }
+    else // c'est un utilisateur
+    {
+        // fonction send to user
+    }
+}
+
+
 ParsedMessage parse_arguments(const std::string &argument)
 {
     ParsedMessage result;
@@ -43,13 +58,13 @@ ParsedMessage parse_arguments(const std::string &argument)
     // Extraire message (ne pas trim!)
     result.message = argument.substr(pos + 1);
     
-    // Optionnel : rejeter les messages vides
+    // rejeter les messages vides
     // if (result.message.empty())
     // {
     //     result.error_code = 412;
     //     return result;
     // }
-    
+    handel_privmsg(result.target, result.message);
     result.valid = true;
     return result;
 }

@@ -145,7 +145,7 @@ void Server::processCommand(int index, std::string &message)
 		//  add more commands here like JOIN, PART, PRIVMSG, etc. use cmmand and argument variables
 
 		// youssef part
-		else if( command == "PRIVMSG" || command == "KICK" || command == "TOPIC")
+		else if( command == "PRIVMSG" || command == "KICK" || command == "MOD")
 		{
 			if (command == "PRIVMSG")
 			{
@@ -155,7 +155,7 @@ void Server::processCommand(int index, std::string &message)
 			{
 				
 			}
-			else if (command == "TOPIC")
+			else if (command == "MOD")
 			{
 				
 			}
