@@ -2,18 +2,6 @@
 #include "../includes/Client.hpp"
 
 
-
-void trim(std::string &s)
-{
-    size_t start = s.find_first_not_of(" \t");
-    size_t end = s.find_last_not_of(" \t");
-
-    if (start == std::string::npos)
-        s = "";
-    else
-        s = s.substr(start, end - start + 1);
-}
-
 void handel_privmsg(std::string target, std::string message)
 {
     int i = 0;
@@ -27,6 +15,18 @@ void handel_privmsg(std::string target, std::string message)
         // fonction send to user
     }
 }
+
+void trim(std::string &s)
+{
+    size_t start = s.find_first_not_of(" \t");
+    size_t end = s.find_last_not_of(" \t");
+
+    if (start == std::string::npos)
+        s = "";
+    else
+        s = s.substr(start, end - start + 1);
+}
+
 
 
 ParsedMessage parse_arguments(const std::string &argument)
