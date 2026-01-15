@@ -117,3 +117,6 @@ bool pars_nick(std::string _nickname)
 	return false;
 }
 
+
+
+
