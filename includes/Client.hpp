@@ -3,13 +3,15 @@
 
 
 #include <iostream>
-#include "Server.hpp"
-#include <sstream> // for iss
+#include <sstream>
+#include <poll.h>      // Pour struct pollfd
+#include <unistd.h>    // Pour close()
+#include <netdb.h>
 
-void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
+class Server;
+
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
 // bool massage_complet(std::string buffer);
-bool user_parsing(const std::string& argument, Client* client);
 bool pars_nick(std::string _nickname);
 bool split(std::string &s, char delimiter, std::string &left, std::string &right);
 
@@ -53,12 +55,9 @@ class Client {
 		// bool isNicknameTaken(std::string nickname);
 };
 
-struct ParsedMessage {
-    std::string target;      // destinataire
-    std::string message;     // le message
-    bool valid;              // succès du parsing
-    int error_code;          // code d'erreur si !valid
-};
+void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
+bool user_parsing(const std::string& argument, Client* client);
+
 
 
 #endif

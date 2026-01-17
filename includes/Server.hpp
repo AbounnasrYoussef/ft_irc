@@ -4,6 +4,9 @@
 #include <iostream>
 # define MAX_CLIENTS 10
 
+#include <vector>
+#include <map>
+#include "Channel.hpp"
 #include <sys/socket.h>
 #include <unistd.h>
 #include <poll.h>
@@ -14,6 +17,7 @@
 #include <arpa/inet.h>   // AF_INET, AF_INET6
 
 class Client;
+class Channel;
 extern int g_num_fds;
 
 void sendError(int fd, const std::string& msg);
@@ -27,6 +31,8 @@ class Server {
 		char buffer[512];       // Buffer for incoming data
 		struct pollfd _fds[MAX_CLIENTS];  // Poll array
 		// int _numFds;                      // Number of active fds
+		// youssef ajouter la gestion des channel dns server
+		std::map<std::string, Channel*> _channels;
 	
 	public:
 		Server();
@@ -54,6 +60,14 @@ class Server {
 	bool isNicknameTaken(std::string nickname, int excludeIndex);
 	bool check_passok(std::string command, std::string argument, int index);
 	bool check_authentication(std::string command, std::string argument, int index);
+
+	//youssef part
+	void handle_privmsg(int sender_index, const std::string&  argument);
+	Client* get_client_by_nickname(const std::string& nickname);
+	Channel* get_channel(const std::string& name);
+    Channel* create_channel(const std::string& name);
+    void delete_channel(Channel* channel);
+
 };
 
 

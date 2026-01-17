@@ -148,7 +148,7 @@ void Server::processCommand(int index, std::string &message)
 		{
 			if (command == "PRIVMSG")
 			{
-				//handel_privmsg(argument);
+				this->handle_privmsg(index, argument);
 			}
 			else if (command == "KICK")
 			{
