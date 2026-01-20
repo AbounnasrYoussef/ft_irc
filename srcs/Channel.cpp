@@ -2,13 +2,19 @@
 #include "../includes/Client.hpp"
 #include "../includes/Server.hpp"
 
-Channel::Channel() : _name(""), _topic(""), _key("")
-{
-}
-
 Channel::Channel(const std::string& name) : _name(name), _topic(""), _key("")
 {
+    _invite_only = false;
+    _topic_protected = false;
+    _moderated = false;
+    _no_external = false;
+    _user_limit = 0;
 }
+
+
+// Channel::Channel(const std::string& name) : _name(name), _topic(""), _key("")
+// {
+// }
 
 Channel::Channel(const Channel& other)
 {
@@ -133,6 +139,19 @@ bool Channel::is_empty()
 {
     return _members.empty();
 }
+// Getters
+bool Channel::is_invite_only() const { return _invite_only; }
+bool Channel::is_topic_protected() const { return _topic_protected; }
+bool Channel::is_moderated() const { return _moderated; }
+bool Channel::is_no_external() const { return _no_external; }
+int Channel::get_user_limit() const { return _user_limit; }
+
+// Setters
+void Channel::set_invite_only(bool value) { _invite_only = value; }
+void Channel::set_topic_protected(bool value) { _topic_protected = value; }
+void Channel::set_moderated(bool value) { _moderated = value; }
+void Channel::set_no_external(bool value) { _no_external = value; }
+void Channel::set_user_limit(int limit) { _user_limit = limit; }
 
 // Fonctions du serveur (à déplacer dans un fichier séparé)
 Channel* Server::get_channel(const std::string& name)

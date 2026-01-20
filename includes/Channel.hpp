@@ -1,11 +1,14 @@
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
+
+
 #include <iostream>
 #include <vector>
 #include <string>
 
 class Client;
+
 
 class Channel {
     private:
@@ -14,6 +17,11 @@ class Channel {
         std::vector<Client*> _operators;
         std::string _topic;
         std::string _key;
+        bool _invite_only;      // Mode +i
+        bool _topic_protected;  // Mode +t
+        bool _moderated;        // Mode +m
+        bool _no_external;      // Mode +n
+        int _user_limit;        // Mode +l (0 = pas de limite)
         
     public:
         Channel();
@@ -34,6 +42,19 @@ class Channel {
         void set_topic(std::string topic);
         
         bool is_empty();
+
+        //mode
+        bool is_invite_only() const;
+        bool is_topic_protected() const;
+        bool is_moderated() const;
+        bool is_no_external() const;
+        int get_user_limit() const;
+        
+        void set_invite_only(bool value);
+        void set_topic_protected(bool value);
+        void set_moderated(bool value);
+        void set_no_external(bool value);
+        void set_user_limit(int limit);
         
         Channel& operator=(const Channel& other);
         ~Channel();

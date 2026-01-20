@@ -152,11 +152,11 @@ void Server::processCommand(int index, std::string &message)
 			}
 			else if (command == "KICK")
 			{
-				//handel_kick(argument);
+				this->handle_kick(index, argument);
 			}
 			else if (command == "MODE")
 			{
-				//handel_mode(argument);
+				handle_mode(index,argument);
 			}
 		}
 

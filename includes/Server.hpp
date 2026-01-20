@@ -67,6 +67,8 @@ class Server {
 	Channel* get_channel(const std::string& name);
     Channel* create_channel(const std::string& name);
     void delete_channel(Channel* channel);
+	void handle_kick(int kicker_index, const std::string& argument);
+	void handle_mode(int setter_index, const std::string& argument);
 
 };
 
