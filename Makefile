@@ -4,7 +4,8 @@ CC = c++
 
 CFLAGS = #-Wall -Wextra -Werror -std=c++98
 
-SRC = main.cpp srcs/Server.cpp srcs/Client.cpp tools/Client_tools.cpp
+SRC = main.cpp srcs/Server.cpp srcs/Client.cpp tools/Client_tools.cpp tools/Server_tools.cpp \
+		srcs/Channel.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -13,7 +14,7 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
-%.o: %.cpp 
+%.o: %.cpp includes/Channel.hpp includes/Client.hpp  includes/Server.hpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
