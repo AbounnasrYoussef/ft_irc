@@ -3,6 +3,7 @@
 
 
 #include <iostream>
+<<<<<<< HEAD
 #include "Server.hpp"
 #include <set> // OTHMANE ADDTHIS FOR join
 #include <sstream> // for iss
@@ -11,9 +12,17 @@
 class Channel;
 class Client;
 void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
+=======
+#include <sstream>
+#include <poll.h>      // Pour struct pollfd
+#include <unistd.h>    // Pour close()
+#include <netdb.h>
+
+class Server;
+
+>>>>>>> youssef
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
 // bool massage_complet(std::string buffer);
-bool user_parsing(const std::string& argument, Client* client);
 bool pars_nick(std::string _nickname);
 bool split(std::string &s, char delimiter, std::string &left, std::string &right);
 
@@ -60,6 +69,7 @@ class Client {
 		void setBuffer(std::string const data);
 		// bool isNicknameTaken(std::string nickname);
 
+<<<<<<< HEAD
 
 		// for join 
 		// Client(const std::string& nick,const std::string& user);
@@ -72,4 +82,11 @@ class Client {
 		// const std::set<Channel*> getChannels() const;
 		
 };
+=======
+void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
+bool user_parsing(const std::string& argument, Client* client);
+
+
+
+>>>>>>> youssef
 #endif

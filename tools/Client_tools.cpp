@@ -1,4 +1,5 @@
 #include "../includes/Client.hpp"
+#include "../includes/Server.hpp"
 
 void removeClient(struct pollfd fds[], Client *clients[], int &num_fds, int index)
 {
@@ -58,6 +59,7 @@ bool user_parsing(const std::string &argument, Client *client) // need learn for
 
 	return true;
 }
+<<<<<<< HEAD
 bool split(std::string &s, char delimiter, std::string &left, std::string &right)
 {
 	size_t pos_nl = s.find('\n'); // نبحث عن نهاية السطر أولاً
@@ -95,7 +97,8 @@ bool split(std::string &s, char delimiter, std::string &left, std::string &right
 		right = line.substr(pos_space + 1);
 		return !left.empty();
 	}
-}
+=======
+
 // bool split(std::string &s, char delimiter, std::string &left, std::string &right)
 // {
 // 	size_t pos = s.find('\n');
@@ -135,6 +138,87 @@ bool split(std::string &s, char delimiter, std::string &left, std::string &right
 // 	return (!left.empty() && !right.empty());
 // }
 
+bool split(std::string &s, char delimiter, std::string &left, std::string &right)
+{
+    size_t pos_nl = s.find('\n'); // نبحث عن نهاية السطر أولاً
+    std::string line;
+
+    if (pos_nl != std::string::npos)
+    {
+        line = s.substr(0, pos_nl); // نأخذ السطر حتى \n
+        s = s.substr(pos_nl + 1);    // نحذف السطر من الرسالة الأصلية
+    }
+    else
+    {
+        line = s;
+        s = ""; // لا يوجد \n — نستهلك كل الرسالة
+    }
+
+    // الآن ننظف line من \r إن وجد
+    if (!line.empty() && line.back() == '\r')
+        line.pop_back();
+
+    // الآن نبحث عن أول مسافة
+    size_t pos_space = line.find(' ');
+
+    if (pos_space == std::string::npos)
+    {
+        // لا توجد مسافة — إذًا الأمر بدون معطى
+        left = line;          // ← كامل السطر هو الأمر
+        right = "";              // ← لا يوجد معطى
+        return !left.empty(); // نرجع true طالما يوجد أمر
+    }
+    else
+    {
+        // يوجد مسافة — نقسم
+        left = line.substr(0, pos_space);
+        right = line.substr(pos_space + 1);
+        return !left.empty();
+    }
+>>>>>>> youssef
+}
+// bool split(std::string &s, char delimiter, std::string &left, std::string &right)
+// {
+// 	size_t pos = s.find('\n');
+// 	size_t pos_space = s.find(' ');
+// 	std::string tmp;
+
+<<<<<<< HEAD
+// 	if (pos == std::string::npos)
+// 	{
+// 		if (pos_space == std::string::npos)
+// 		{
+// 			return false;
+// 		}
+// 		else
+// 		{
+// 			tmp = s;
+// 			tmp = s.substr(0, pos);
+// 			std::string copy = s.substr(pos + 1);
+// 			s = copy;
+// 			left = tmp.substr(0, pos_space);
+// 			right = tmp.substr(pos_space + 1);
+// 			s = "";
+// 			return (!left.empty() && !right.empty());
+// 		}
+// 	}
+
+// 	tmp = s;
+// 	tmp = s.substr(0, pos);
+// 	std::string copy = s.substr(pos + 1);
+// 	s = copy;
+// 	pos = tmp.find(' ');
+
+// 	if (pos == std::string::npos)
+// 		return false;
+
+// 	left = tmp.substr(0, pos);
+// 	right = tmp.substr(pos + 1);
+// 	return (!left.empty() && !right.empty());
+// }
+
+=======
+>>>>>>> youssef
 bool isalpha_string(std::string str)
 {
 	for (size_t i = 0; i < str.length(); ++i)
@@ -152,3 +236,10 @@ bool pars_nick(std::string _nickname)
 
 	return false;
 }
+<<<<<<< HEAD
+=======
+
+
+
+
+>>>>>>> youssef

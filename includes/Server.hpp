@@ -6,6 +6,9 @@
 
 
 
+#include <vector>
+#include <map>
+#include "Channel.hpp"
 #include <sys/socket.h>
 #include <unistd.h>
 #include <poll.h>
@@ -37,8 +40,14 @@ class Server {
 		char buffer[512];       // Buffer for incoming data
 		struct pollfd _fds[MAX_CLIENTS];  // Poll array
 		// int _numFds;                      // Number of active fds
+<<<<<<< HEAD
 		std::map<std::string, Channel*> _channels;
 
+=======
+		// youssef ajouter la gestion des channel dns server
+		std::map<std::string, Channel*> _channels;
+	
+>>>>>>> youssef
 	public:
 		Server();
 		Server(const Server& other);
@@ -66,8 +75,19 @@ class Server {
 	bool check_passok(std::string command, std::string argument, int index);
 	bool check_authentication(std::string command, std::string argument, int index);
 
+<<<<<<< HEAD
 	// for add channel
 Channel* findOrCreateChannel(const std::string& name);
+=======
+	//youssef part
+	void handle_privmsg(int sender_index, const std::string&  argument);
+	Client* get_client_by_nickname(const std::string& nickname);
+	Channel* get_channel(const std::string& name);
+    Channel* create_channel(const std::string& name);
+    void delete_channel(Channel* channel);
+	void handle_kick(int kicker_index, const std::string& argument);
+	void handle_mode(int setter_index, const std::string& argument);
+>>>>>>> youssef
 
 };
 

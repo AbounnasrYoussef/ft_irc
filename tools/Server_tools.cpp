@@ -106,6 +106,7 @@ bool Server::check_authentication(std::string command, std::string argument, int
 	return true;
 }
 
+<<<<<<< HEAD
 // this split about #chanel of the user
 
 std::vector<std::string> split_chanel(const std::string &str, char delemeter)
@@ -124,6 +125,8 @@ std::vector<std::string> split_chanel(const std::string &str, char delemeter)
 	return resolt_chanel;
 }
 
+=======
+>>>>>>> youssef
 void Server::processCommand(int index, std::string &message)
 {
 	std::string command;
@@ -277,6 +280,27 @@ void Server::processCommand(int index, std::string &message)
 		}
 		// sendError(this->clients[index]->get_fd(),"["  + argument + "]\r\n");
 		//  add more commands here like JOIN, PART, PRIVMSG, etc. use cmmand and argument variables
+<<<<<<< HEAD
+=======
+
+		// youssef part : "kick , privmsg , mode"
+		else if( command == "PRIVMSG" || command == "KICK" || command == "MODE")
+		{
+			if (command == "PRIVMSG")
+			{
+				this->handle_privmsg(index, argument);
+			}
+			else if (command == "KICK")
+			{
+				this->handle_kick(index, argument);
+			}
+			else if (command == "MODE")
+			{
+				handle_mode(index,argument);
+			}
+		}
+
+>>>>>>> youssef
 	}
 }
 
