@@ -1,5 +1,7 @@
 #include "../includes/Client.hpp"
 
+class channel;
+
 Client::Client(int fd) : _fd(fd)
 {
 	_nickname = "";
@@ -10,10 +12,8 @@ Client::Client(int fd) : _fd(fd)
 	_welcomeSent = false;
 }
 
-
 Client::~Client()
 {
-
 }
 
 // Getters
@@ -34,7 +34,7 @@ std::string Client::getUsername() const
 
 bool Client::isRegistered() const
 {
-	return ( _passOk && !_nickname.empty() && !_username.empty() );
+	return (_passOk && !_nickname.empty() && !_username.empty());
 }
 
 bool Client::isWelcomeSent() const
@@ -51,7 +51,6 @@ std::string Client::getIP() const
 	return _ip;
 }
 
-
 // void Client::setRegistered(bool reg) // no need
 // {
 // 	_registered = reg;
@@ -62,7 +61,7 @@ bool Client::isPassOk() const
 	return _passOk;
 }
 
-std::string Client::getBuffer() const 
+std::string Client::getBuffer() const
 {
 	return _buffer;
 }
@@ -78,7 +77,6 @@ void Client::setUsername(std::string user)
 {
 	_username = user;
 }
-
 
 void Client::appendBuffer(std::string const data)
 {
@@ -109,3 +107,45 @@ void Client::setBuffer(std::string const data)
 {
 	_buffer = data;
 }
+
+void Client::addChannel(Channel *channel)
+{
+	if (!channel)
+	{
+		return;
+	}
+	if (_channels.find(channel) != _channels.end())
+	{
+		return;
+	}
+	_channels.insert(channel);
+	// client->addChannel(this);
+}
+
+// void Client::removeChannel(Channel *chanael)
+// {
+// 	if(!chanael)
+// 		{
+// 			return;
+// 		}
+// 		auto it = Chanael.find(chanael);
+// 		if(it != Chanael.end())
+// 		{
+// 			Chanael.erase(it);
+// 		}
+
+// }
+// 	bool Client::isInChannel(const std::string& channelName)const
+// 	{
+// 		    for (std::set<Channel*>::const_iterator it = Chanael.begin();
+//          it != Chanael.end(); ++it)
+//     {
+//         if ((*it)->getName() == channelName)
+//             return true;
+//     }
+//     return false;
+// 	}
+// const std::set<Channel*> Client::getChannels() const
+// {
+// 	return Chanael;
+// }

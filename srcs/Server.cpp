@@ -225,3 +225,21 @@ void Server::start()
 	}
 	
 }
+
+// function to add and creat channel of the JOIN
+
+
+
+Channel* Server::findOrCreateChannel(const std::string& name)
+{
+	if(_channels.find(name) != _channels.end())
+	{
+		return _channels[name];
+	}
+	else
+	{
+		Channel* newChan = new  Channel(name);
+		_channels[name] = newChan;
+		return newChan;
+}
+}

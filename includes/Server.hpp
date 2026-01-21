@@ -9,13 +9,21 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <poll.h>
+
+// add for othmane
+
+#include <map>
+#include "Channel.hpp"
+
 #include <stdlib.h>
 #include <netdb.h>       // getnameinfo, NI_MAXHOST
 #include <sys/socket.h>  // sockaddr, sockaddr_storage
 #include <netinet/in.h>  // sockaddr_in, sockaddr_in6
 #include <arpa/inet.h>   // AF_INET, AF_INET6
+#include "Channel.hpp"
 
 class Client;
+class Channel;
 extern int g_num_fds;
 
 void sendError(int fd, const std::string& msg);
@@ -29,7 +37,8 @@ class Server {
 		char buffer[512];       // Buffer for incoming data
 		struct pollfd _fds[MAX_CLIENTS];  // Poll array
 		// int _numFds;                      // Number of active fds
-	
+		std::map<std::string, Channel*> _channels;
+
 	public:
 		Server();
 		Server(const Server& other);
@@ -56,6 +65,10 @@ class Server {
 	bool isNicknameTaken(std::string nickname, int excludeIndex);
 	bool check_passok(std::string command, std::string argument, int index);
 	bool check_authentication(std::string command, std::string argument, int index);
+
+	// for add channel
+Channel* findOrCreateChannel(const std::string& name);
+
 };
 
 
