@@ -132,7 +132,7 @@ void Server::handle_ClientData(int index)
 {
 	//  Process client messages for the specific client at index
 
-	if (this->_fds[index].revents & POLLIN)
+	if (this->_fds[index].revents & POLLIN) // need check pollout too
 	{
 		int bytes = read(this->_fds[index].fd, this->buffer, 511); // Read max 511 to leave room for null terminator
 
@@ -176,6 +176,7 @@ void Server::handle_ClientData(int index)
 				// int i = 1;
 				while (!message.empty())
 				{
+					int i = 1;
 					// std::cout << "number " << i << "[" << message << "]" << std::endl; // Debug line
 					processCommand(index, message);
 				}

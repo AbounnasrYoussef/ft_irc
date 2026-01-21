@@ -58,43 +58,81 @@ bool user_parsing(const std::string& argument, Client* client) // need learn for
 	return true;
 }
 
+// bool split(std::string &s, char delimiter, std::string &left, std::string &right)
+// {
+// 	size_t pos = s.find('\n');
+// 	size_t pos_space = s.find(' ');
+// 	std::string tmp;
+
+// 	if (pos == std::string::npos)
+// 	{
+// 		if (pos_space == std::string::npos)
+// 		{
+// 			return false;
+// 		}
+// 		else
+// 		{
+// 			tmp = s;
+// 			tmp = s.substr(0, pos);
+// 			std::string copy = s.substr(pos + 1);
+// 			s = copy;
+// 			left = tmp.substr(0, pos_space);
+// 			right = tmp.substr(pos_space + 1);
+// 			s = "";
+// 			return (!left.empty() && !right.empty());
+// 		}
+// 	}
+
+// 	tmp = s;
+// 	tmp = s.substr(0, pos);
+// 	std::string copy = s.substr(pos + 1);
+// 	s = copy;
+// 	pos = tmp.find(' ');
+
+// 	if (pos == std::string::npos)
+// 		return false;
+
+// 	left = tmp.substr(0, pos);
+// 	right = tmp.substr(pos + 1);
+// 	return (!left.empty() && !right.empty());
+// }
 bool split(std::string &s, char delimiter, std::string &left, std::string &right)
 {
-	size_t pos = s.find('\n');
-	size_t pos_space = s.find(' ');
-	std::string tmp;
+    size_t pos_nl = s.find('\n'); // نبحث عن نهاية السطر أولاً
+    std::string line;
 
-	if (pos == std::string::npos)
-	{
-		if (pos_space == std::string::npos)
-		{
-			return false;
-		}
-		else
-		{
-			tmp = s;
-			tmp = s.substr(0, pos);
-			std::string copy = s.substr(pos + 1);
-			s = copy;
-			left = tmp.substr(0, pos_space);
-			right = tmp.substr(pos_space + 1);
-			s = "";
-			return (!left.empty() && !right.empty());
-		}
-	}
+    if (pos_nl != std::string::npos)
+    {
+        line = s.substr(0, pos_nl); // نأخذ السطر حتى \n
+        s = s.substr(pos_nl + 1);    // نحذف السطر من الرسالة الأصلية
+    }
+    else
+    {
+        line = s;
+        s = ""; // لا يوجد \n — نستهلك كل الرسالة
+    }
 
-	tmp = s;
-	tmp = s.substr(0, pos);
-	std::string copy = s.substr(pos + 1);
-	s = copy;
-	pos = tmp.find(' ');
+    // الآن ننظف line من \r إن وجد
+    if (!line.empty() && line.back() == '\r')
+        line.pop_back();
 
-	if (pos == std::string::npos)
-		return false;
+    // الآن نبحث عن أول مسافة
+    size_t pos_space = line.find(' ');
 
-	left = tmp.substr(0, pos);
-	right = tmp.substr(pos + 1);
-	return (!left.empty() && !right.empty());
+    if (pos_space == std::string::npos)
+    {
+        // لا توجد مسافة — إذًا الأمر بدون معطى
+        left = line;          // ← كامل السطر هو الأمر
+        right = "";              // ← لا يوجد معطى
+        return !left.empty(); // نرجع true طالما يوجد أمر
+    }
+    else
+    {
+        // يوجد مسافة — نقسم
+        left = line.substr(0, pos_space);
+        right = line.substr(pos_space + 1);
+        return !left.empty();
+    }
 }
 
 

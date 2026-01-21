@@ -102,6 +102,7 @@ bool Server::check_authentication(std::string command, std::string argument, int
 
 			return true;
 	}
+
 	return true;
 }
 
@@ -114,6 +115,7 @@ void Server::processCommand(int index, std::string &message)
 	if (split(message, ' ', command, argument))
 	{
 		// Handle PASS, NICK, USER for registration
+		// std::cout << "[" << command << "]" << std::endl; // Debug line to show received command;
 		if (command == "PASS" || command == "NICK" || command == "USER")
 		{
 
@@ -161,6 +163,13 @@ void Server::processCommand(int index, std::string &message)
 			message = "";
 			return;
 		}
+		else if (command == "QUIT")
+		{
+			// Handle QUIT command
+			sendError(this->clients[index]->get_fd(), "221 Goodbye!\r\n");
+			Quit();
+			return;
+		}
 		//  add more commands here like JOIN, PART, PRIVMSG, etc. use cmmand and argument variables
 
 	}
@@ -184,4 +193,27 @@ bool Server::isNicknameTaken(std::string nickname, int excludeIndex)
 		}
 	}
 	return false;  // Not taken
+}
+
+int Server::getServerFd()
+{
+	return this->server_Fd;
+}
+
+void Server::Quit()
+{
+	// Close all client connections
+	for (int i = 1; i < g_num_fds; ++i)
+	{
+		if (this->clients[i])
+		{
+			close(this->clients[i]->get_fd());
+			delete this->clients[i];
+			this->clients[i] = NULL;
+		}
+	}
+	// Close server socket
+	// close(this->server_Fd);
+	// exit(0);
+	
 }

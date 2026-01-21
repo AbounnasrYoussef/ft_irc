@@ -38,13 +38,19 @@ class Server {
 		~Server();
 	
 	Client* clients[MAX_CLIENTS];    // Array of client pointers
-	
+	// getters/setters
+	int getServerFd();
+	void Quit();
 	// Core server functions
 	void start();                     // Main server loop
 	void setupSocket();               // socket() + bind() + listen()
 	void accept_NewClient();           // accept() new connection
 	void handle_ClientData(int index); // Process client messages
 	// void removeClient(int index);     // Disconnect and cleanup
+	// Bot function
+	void bot(std::string &message, std::string command, std::string argument, int index);
+	int check_client_is_live(int index, std::string aragument);
+
 	
 	// Message handling
 	// void processCommand(Client* client, std::string message);
