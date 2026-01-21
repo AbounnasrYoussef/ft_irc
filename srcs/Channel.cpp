@@ -1,11 +1,17 @@
 #include "../includes/Channel.hpp"
 #include "../includes/Client.hpp"
-<<<<<<< HEAD
+
 #include <unistd.h>
 
 class Channel;
-Channel::Channel(const std::string &name) : _name(name), _key(""), hasAkey(false)
+Channel::Channel(const std::string &name) : _name(name), _topic(""), _key(""), hasAkey(false)
 {
+        _invite_only = false;
+    _topic_protected = false;
+    _moderated = false;
+    _no_external = false;
+    _user_limit = 0;
+
 }
 
 void Channel::addUser(Client *client)
@@ -96,17 +102,17 @@ std::string Channel::getuserList()
 		list += (*it)->getNickname();
 	}
 	return list;
-=======
-#include "../includes/Server.hpp"
-
-Channel::Channel(const std::string& name) : _name(name), _topic(""), _key("")
-{
-    _invite_only = false;
-    _topic_protected = false;
-    _moderated = false;
-    _no_external = false;
-    _user_limit = 0;
 }
+// #include "../includes/Server.hpp"
+
+// Channel::Channel(const std::string& name) : _name(name), _key("")
+// {
+//     _invite_only = false;
+//     _topic_protected = false;
+//     _moderated = false;
+//     _no_external = false;
+//     _user_limit = 0;
+// }
 
 
 // Channel::Channel(const std::string& name) : _name(name), _topic(""), _key("")
@@ -280,5 +286,4 @@ void Server::delete_channel(Channel* channel)
     std::string name = channel->get_name();
     _channels.erase(name);
     delete channel;
->>>>>>> youssef
 }
