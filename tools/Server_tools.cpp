@@ -302,6 +302,7 @@ void Server::processCommand(int index, std::string &message)
 
 >>>>>>> youssef
 	}
+	
 }
 
 void sendError(int fd, const std::string &msg)
