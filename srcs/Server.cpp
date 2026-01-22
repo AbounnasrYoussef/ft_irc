@@ -180,7 +180,7 @@ void Server::handle_ClientData(int index)
 					// std::cout << "number " << i << "[" << message << "]" << std::endl; // Debug line
 					// i++;
 					processCommand(index, message);
-				}
+				}		
 		}
 		
 		// Update client's buffer with remaining unprocessed data
