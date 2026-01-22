@@ -21,13 +21,49 @@ int Server::check_client_is_live(int index, std::string aragument)
 
 void Server::bot(std::string &message, std::string command, std::string argument, int index)
 {
+	// command = strtoupper(command); // for test need change ft_toupper
+	// std::cout << ">>[" << command << "]" << std::endl;
 	if (command == "!HELP")
 	{
-		std::string pass = "Password only numbers like 123"; // Example password
-		std::string nicke = "Nickname only letters like JohnDoe"; // Example nickname
-		std::string user = "user only letters and use this syntax <username> <hostname> <servername> <realname>\n"; // Example user
+		std::string msg;
+
+		msg += "=== ft_irc HELP ===\n";
+		msg += "To register (mandatory):\n";
+		msg += "  1) PASS <password>                                      -> set server password (must be first and password only digits)\n";
+		msg += "  2) NICK <nickname>                                      -> choose your nickname (only letters)\n";
+		msg += "  3) USER <username> <hostname> <servername> <realname>   -> set username + realname\n";
+		msg += "Example:\n";
+		msg += "  PASS 123\n";
+		msg += "  NICK JohnDoe\n";
+		msg += "  USER guest tolmoon tolsun :Ronnie\n";
+		msg += "\n";
+		msg += "Basic commands:\n";
+		msg += "  JOIN #chan            -> join/create a channel\n";
+		msg += "  PRIVMSG <t> :<msg>    -> send message to user or channel\n";
+		msg += "  QUIT :<reason>        -> leave server\n";
+		msg += "\n";
+		msg += "Channel operator commands:\n";
+		msg += "  KICK #chan <nick> :<reason>   -> kick a user\n";
+		msg += "  INVITE <nick> #chan           -> invite user to channel\n";
+		msg += "  TOPIC #chan :<topic>          -> set channel topic\n";
+		msg += "  MODE  #chan <modes>           -> change channel modes\n";
+		msg += "\n";
+		msg += "Bot fun commands:\n";
+		msg += "  !GTA    [nick]  -> GTA wanted level (random ⭐)\n";
+		msg += "  !battle [nick]  -> random fight result\n";
+		msg += "\n";
+
+		sendError(this->_fds[index].fd, msg);
+
+			
+		return;
 	}
-	else if (command == "!USER")
+	if (this->clients[index]->isPassOk() == false)
+	{
+		sendError(this->_fds[index].fd, "ERROR: You must be registered to use bot commands. Use PASS, NICK, and USER to register.\r\n");
+		return;
+	}
+	if (command == "!USER")
 	{
 		int client_index = check_client_is_live(index, argument);
 		if (client_index != -1)
@@ -42,24 +78,41 @@ void Server::bot(std::string &message, std::string command, std::string argument
 	}
 	else if (command == "!SERVER")
 	{
+		std::stringstream num_clients;
+		std::stringstream port;
+		num_clients << (g_num_fds - 1); // excluding server fd
+		port << this->port;
+
 		std::string Server_Name = "🟧 Orange Pixel 🟧";
-		std::string clients_count = (g_num_fds - 1); // excluding server fd
+		std::string clients_count = num_clients.str(); // excluding server fd
 		std::string channels_count = "N/A"; // Placeholder, implement channel tracking to get actual count
-		std::string port_number = (this->port);
+		std::string port_number = port.str();
 		std::string response = "Server Info:\nServer Name: " + Server_Name + "\nConnected Clients: " + clients_count + "\nActive Channels: " + channels_count + "\nPort Number: " + port_number + "\n";
 		sendError(this->_fds[index].fd, response + "\r\n");
+		return;
 	}
 	else if (command == "!ABOUT")
 	{
-		std::string Description = "Friendly IRC bot for ft_irc";
-		std::string Version = "v1.0.0";
-		std::string Language = "C++98";
-		std::string Features = " !help !wanted !race !coin !roll";
-		std::string Developers = "Developed by nbougrin and yabounna and oelbied";
-		std::string response = "Bot Info:\nDescription: " + Description + "\nVersion: " + Version + "\nLanguage: " + Language + "\nFeatures: " + Features + "\nDevelopers: " + Developers + "\n";
-		sendError(this->_fds[index].fd, response + "\r\n");
-		
+		std::string botName     = "MarvinBot";
+		std::string description = "Friendly ft_irc bonus bot (fun + mini-games)";
+		std::string version     = "v1.0.0";
+		std::string language    = "C++98";
+		std::string features    = "!help  !wanted  !battle  !coin  !roll  !race"; // NEED UPDATE
+		std::string developers  = "nbougrin, yabounna, oelbied";
 
+		std::string response;
+		response += "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n";
+		response += "┃ 🤖 " + botName + " - ABOUT\n";
+		response += "┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n";
+		response += "┃ Description : " + description + "\n";
+		response += "┃ Version     : " + version + "\n";
+		response += "┃ Language    : " + language + "\n";
+		response += "┃ Features    : " + features + "\n";
+		response += "┃ Developers  : " + developers + "\n";
+		response += "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n";
+
+		sendError(this->_fds[index].fd, response + "\r\n");
+		return;
 	}
 	else if (command == "!BATTLE")
 	{
@@ -76,10 +129,11 @@ void Server::bot(std::string &message, std::string command, std::string argument
 			else
 				result = "You challenged yourself... and still lost 💀 -999 aura\n";
 			sendError(this->_fds[index].fd, "Battle Result: " + result + "\n");
+			return;
 		}
 		if (client_index == -1)
 		{
-			sendError(this->_fds[index].fd, "Battle: user '" + argument + "' not found ❌ try other user\r\n");
+			sendError(this->_fds[index].fd, "Battle: user '" + argument + "' not found ❌\r\n");
 			return;
 		}
 		if (client_index != -1)
@@ -89,9 +143,9 @@ void Server::bot(std::string &message, std::string command, std::string argument
 			if (outcome == 0)
 				result = "You win! 🏆\n";
 			else if (outcome == 1)
-				result = "draw 😐";
+				result = "Draw 😐";
 			else
-				result = "you got destroyed 💀 you got +999 aura\n";
+				result = "You got destroyed 💀 you got +999 aura\n";
 
 			sendError(this->_fds[index].fd, "Battle Result against " + argument + ": " + result + "\r\n");
 			return;
@@ -100,7 +154,7 @@ void Server::bot(std::string &message, std::string command, std::string argument
 	else if (command == "!GTA")
 	{
 		// GTA command implementation
-		int client_index = check_client_is_live(index, argument);
+		// int client_index = check_client_is_live(index, argument);
 		int outcome = rand() % 3; // 0 = win, 1 = draw, 2 = lose
 		std::string result;
 
@@ -109,12 +163,12 @@ void Server::bot(std::string &message, std::string command, std::string argument
 			if (outcome == 0)
 				result = "⭐⭐ lhnach 🚨 3la9\n";
 			else if (outcome == 1)
-				result = "⭐⭐⭐ hadchi khatir thala ajmil RUN 🏃‍♂️\n";
+				result = "⭐⭐⭐ hadchi khatir thala ajmil RUN 🏃 \n";
 			else
 				result = "⭐⭐⭐⭐⭐ L3AAAZWA 9ADIYA FIHA SWAT 🚁💥 \n";
 			sendError(this->_fds[index].fd, "Battle Result: " + result + "\n");
 		}
-
+		return;
 	}
 	else
 	{

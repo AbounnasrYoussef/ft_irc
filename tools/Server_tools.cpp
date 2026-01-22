@@ -114,6 +114,7 @@ void Server::processCommand(int index, std::string &message)
 
 	if (split(message, ' ', command, argument))
 	{
+		ft_toupper(command);
 		// Handle PASS, NICK, USER for registration
 		// std::cout << "[" << command << "]" << std::endl; // Debug line to show received command;
 		if (command == "PASS" || command == "NICK" || command == "USER")
@@ -129,14 +130,14 @@ void Server::processCommand(int index, std::string &message)
 						return;
 					}
 					sendError(this->clients[index]->get_fd(), "error clean message buffer\r\n"); // for debug
-					message = "";
+					// message = "";
 					return;
 				}
 			}
 			if (check_authentication(command, argument, index) == false)
 			{
 				sendError(this->clients[index]->get_fd(), "error clean message buffer\r\n"); // for debug
-				message = "";
+				// message = "";
 				return;
 			}
 			if (this->clients[index]->isRegistered() && this->clients[index]->isWelcomeSent() == false)
@@ -155,19 +156,24 @@ void Server::processCommand(int index, std::string &message)
 			}
 			return;
 		}
-		else if (this->clients[index]->isRegistered() == false)
-		{
+		// else if (this->clients[index]->isRegistered() == false)
+		// {
 			
-			sendError(this->clients[index]->get_fd(), "451 ERR_NOTREGISTERED : You have not registered\r\n");
-			sendError(this->clients[index]->get_fd(), "error clean message buffer\r\n"); // for debug
-			message = "";
-			return;
-		}
+		// 	sendError(this->clients[index]->get_fd(), "451 ERR_NOTREGISTERED : You have not registered\r\n");
+		// 	sendError(this->clients[index]->get_fd(), "error clean message buffer\r\n"); // for debug
+		// 	message = "";
+		// 	return;
+		// }
 		else if (command == "QUIT")
 		{
 			// Handle QUIT command
 			sendError(this->clients[index]->get_fd(), "221 Goodbye!\r\n");
 			Quit();
+			return;
+		}
+		else
+		{
+			this->bot(message, command, argument, index);
 			return;
 		}
 		//  add more commands here like JOIN, PART, PRIVMSG, etc. use cmmand and argument variables

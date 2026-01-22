@@ -12,20 +12,39 @@
 
 int g_num_fds = 1;
 
+bool ft_isdigit(char *str)
+{
+	while (*str)
+	{
+		if (!isdigit(*str))
+			return (false);
+		str++;
+	}
+
+	return ( true );
+}
+
 int main(int ac, char **av)
 {
-	if (ac != 3)
+	if (ac != 3 || !av[1][0] || !av[2][0])
 	{
 		std::cerr << "Usage: " << av[0] << " <PORT>"  << " <PASSWORD>" << std::endl;
 		return 1;
 	}
-	// if (std::atoi(av[1]) <= 0 || !isalpha_string(av[2]))
-	// {
-	// 	std::cerr << "Error: Invalid port number." << std::endl;
-	// 	return 1;
-	// }
 
-	Server ser(std::atoi(av[1]), av[2]);
+	if (ft_isdigit(av[1]) == false ||  std::atoi(av[1]) == false)
+	{
+		std::cerr << "Error: accept only number in port and password" << std::endl;
+		return 1;
+	}
+	int port = std::atoi(av[1]);
+	if (port <= 0 || port > 65535)
+	{
+		std::cerr << "Error: port must be between 1 and 65535" << std::endl;
+		return 1;
+	}
+	
+	Server ser(port, av[2]);
 	ser.start();
 
 	return 0;

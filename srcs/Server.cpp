@@ -174,10 +174,11 @@ void Server::handle_ClientData(int index)
 			// Process the complete message
 				// std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
 				// int i = 1;
+					int i = 1;
 				while (!message.empty())
 				{
-					int i = 1;
 					// std::cout << "number " << i << "[" << message << "]" << std::endl; // Debug line
+					// i++;
 					processCommand(index, message);
 				}
 		}

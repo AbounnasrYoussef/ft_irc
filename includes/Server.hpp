@@ -18,6 +18,7 @@
 class Client;
 extern int g_num_fds;
 
+void ft_toupper(std::string &str);
 void sendError(int fd, const std::string& msg);
 bool isalpha_string(std::string str);
 
