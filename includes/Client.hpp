@@ -69,6 +69,7 @@ class Client {
 		// for join 
 		// Client(const std::string& nick,const std::string& user);
 		void addChannel(Channel *Channel);
+		std::string get_prefix() const;
 		// void removeChannel(Channel *Channel);
 		// bool isInChannel(const std::string& channelName)const;
 

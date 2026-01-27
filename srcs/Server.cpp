@@ -10,6 +10,9 @@
 #include "../includes/Server.hpp"
 #include "fcntl.h"
 
+// #include "Client.hpp"
+class Channel;
+class Client;
 
 Server::~Server()
 {
@@ -35,7 +38,7 @@ void Server::setupSocket()
 		// Cleanup and exit
 		exit(1);
 	}
-    if (fcntl(this->server_Fd, F_SETFL, O_NONBLOCK) == -1) 
+	if (fcntl(this->server_Fd, F_SETFL, O_NONBLOCK) == -1)
 	{
 		std::cerr << "Error: Failed to set server socket to non-blocking" << std::endl;
 		close(this->server_Fd);
@@ -48,21 +51,21 @@ void Server::setupSocket()
 		close(this->server_Fd);
 		// Cleanup and exit
 		exit(1);
-	} 
-	// 2. Bind to port 
-	struct sockaddr_in address;   /// socket(ip:port) for this process 
+	}
+	// 2. Bind to port
+	struct sockaddr_in address; /// socket(ip:port) for this process
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(this->port);
 
-	if (bind(this->server_Fd, (struct sockaddr*)&address, sizeof(address)) == -1)
+	if (bind(this->server_Fd, (struct sockaddr *)&address, sizeof(address)) == -1)
 	{
 		std::cerr << "Error: Failed to bind to port " << this->port << std::endl;
 		close(this->server_Fd);
 		// Cleanup and exit
 		exit(1);
 	}
-	
+
 	// 3. Start listening
 	if (listen(this->server_Fd, 3) == -1) // am ready to accept connections (work) (10.50.20.7:6667)
 	{
@@ -75,7 +78,7 @@ void Server::setupSocket()
 	this->_fds[0].fd = this->server_Fd;
 	this->_fds[0].events = POLLIN;
 	this->_fds[0].revents = 0;
-	
+
 	for (int i = 1; i < MAX_CLIENTS + 1; i++)
 	{
 		this->_fds[i].fd = -1;
@@ -84,7 +87,6 @@ void Server::setupSocket()
 	}
 }
 
-
 void Server::accept_NewClient()
 {
 	if (g_num_fds >= MAX_CLIENTS)
@@ -92,7 +94,7 @@ void Server::accept_NewClient()
 		// Accept and immediately close to prevent client from waiting
 		sockaddr_storage client_addr;
 		socklen_t len = sizeof(client_addr);
-		int client_fd = accept(this->server_Fd, (sockaddr*)&client_addr, &len);
+		int client_fd = accept(this->server_Fd, (sockaddr *)&client_addr, &len);
 		if (client_fd != -1)
 		{
 			sendError(client_fd, "ERROR : Server is full\r\n");
@@ -103,18 +105,18 @@ void Server::accept_NewClient()
 	sockaddr_storage client_addr;
 	socklen_t len = sizeof(client_addr);
 
-	int client_fd = accept(this->server_Fd, (sockaddr*)&client_addr, &len);
+	int client_fd = accept(this->server_Fd, (sockaddr *)&client_addr, &len);
 	if (client_fd == -1)
 	{
 		// Error accepting new client
 		return;
 	}
-	if (fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1) 
-	{
-		std::cerr << "Error: Failed to set client socket to non-blocking" << std::endl;
-		close(client_fd);
-		return;
-	}
+	// if (fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1)
+	// {
+	// 	std::cerr << "Error: Failed to set client socket to non-blocking" << std::endl;
+	// 	close(client_fd);
+	// 	return;
+	// }
 	std::string ip = getClientIP(client_addr, len);
 	// Add new client to our monitoring list
 
@@ -123,10 +125,19 @@ void Server::accept_NewClient()
 	this->_fds[g_num_fds].revents = 0;
 	this->clients[g_num_fds] = new Client(client_fd);
 	this->clients[g_num_fds]->setIP(ip); // set ip of client
-	
+	fcntl(client_fd, F_SETFL, O_NONBLOCK);
+
+	Client *client = new Client(client_fd);
+	client->setIP(getClientIP(client_addr, len));
+
+	_clients[client_fd] = client;
+
+	_fds[g_num_fds].fd = client_fd;
+	_fds[g_num_fds].events = POLLIN;
+	_fds[g_num_fds].revents = 0;
+
 	g_num_fds++; // add to array
 }
-
 
 void Server::handle_ClientData(int index)
 {
@@ -154,33 +165,33 @@ void Server::handle_ClientData(int index)
 
 		// Null terminate the buffer
 		this->buffer[bytes] = '\0';
-		
+
 		// Append new data to client's buffer
 		this->clients[index]->appendBuffer(std::string(this->buffer, bytes));
-		
+
 		// Get the full buffer and process complete messages
 		std::string full_Buffer = this->clients[index]->getBuffer();
 		size_t pos;
-		
+
 		// Process all complete messages (ending with \r\n)
-		while((pos = full_Buffer.find("\r\n")) != std::string::npos)
+		while ((pos = full_Buffer.find("\r\n")) != std::string::npos)
 		{
 			// Extract complete message
 			std::string message = full_Buffer.substr(0, pos);
-			
+
 			// Remove processed message from buffer
 			full_Buffer = full_Buffer.substr(pos + 2);
-			
+
 			// Process the complete message
-				// std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
-				// int i = 1;
-				while (!message.empty())
-				{
-					// std::cout << "number " << i << "[" << message << "]" << std::endl; // Debug line
-					processCommand(index, message);
-				}
+			// std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
+			// int i = 1;
+			while (!message.empty())
+			{
+				// std::cout << "number " << i << "[" << message << "]" << std::endl; // Debug line
+				processCommand(index, message);
+			}
 		}
-		
+
 		// Update client's buffer with remaining unprocessed data
 		this->clients[index]->setBuffer(full_Buffer);
 	}
@@ -189,18 +200,18 @@ void Server::handle_ClientData(int index)
 void Server::start()
 {
 	setupSocket();
-	while(true)
+	while (true)
 	{
-		int ret = poll(this->_fds, g_num_fds, -1);  // -1 = wait forever
+		int ret = poll(this->_fds, g_num_fds, -1); // -1 = wait forever
 		if (ret == -1)
 		{
 			// Error - clean up and exit
 			exit(0);
 		}
-		if(ret > 0)
+		if (ret > 0)
 		{
 			// There are events to process
-		
+
 			// check for new connections
 			if (this->_fds[0].revents & POLLIN)
 			{
@@ -223,23 +234,45 @@ void Server::start()
 			}
 		}
 	}
-	
 }
 
 // function to add and creat channel of the JOIN
 
-
-
-Channel* Server::findOrCreateChannel(const std::string& name)
+Channel *Server::findOrCreateChannel(const std::string &name)
 {
-	if(_channels.find(name) != _channels.end())
+	if (_channels.find(name) != _channels.end())
 	{
 		return _channels[name];
 	}
 	else
 	{
-		Channel* newChan = new  Channel(name);
+		Channel *newChan = new Channel(name);
 		_channels[name] = newChan;
 		return newChan;
+	}
 }
+bool Server::findChannel(const std::string &name)
+{
+	if (_channels.find(name) != _channels.end())
+	{
+		return true;
+	}
+	else
+		return false;
+}
+Client *Server::findClient(const std::string &nickname)
+{
+	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		Client *client = it->second;
+		if (!client)
+		{
+			continue;
+		}
+		if (client->getNickname() == nickname)
+		{
+			return client;
+		}
+	}
+	return nullptr;
 }

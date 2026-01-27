@@ -13,15 +13,16 @@
 
 // add for othmane
 
-#include "Channel.hpp"
+// #include "Channel.hpp"
+// #include "Client.hpp"
 
 #include <stdlib.h>
-#include <netdb.h>		// getnameinfo, NI_MAXHOST
+#include <netdb.h> // getnameinfo, NI_MAXHOST
 #include <map>
 #include <sys/socket.h> // sockaddr, sockaddr_storage
 #include <netinet/in.h> // sockaddr_in, sockaddr_in6
 #include "Channel.hpp"
-#include <arpa/inet.h>	// AF_INET, AF_INET6
+#include <arpa/inet.h> // AF_INET, AF_INET6
 
 class Client;
 class Channel;
@@ -33,14 +34,14 @@ bool isalpha_string(std::string str);
 class Server
 {
 private:
-	int server_Fd;					 // Server socket fd
-	int port;						 // Port number
+	int server_Fd; // Server socket fd
+	int port;	   // Port number
 	std::map<std::string, Channel *> _channels;
+	std::map<int, Client *> _clients;
 	std::string password;			 // Server password
 	char buffer[512];				 // Buffer for incoming data
 	struct pollfd _fds[MAX_CLIENTS]; // Poll array
-	// int _numFds;                      // Number of active fds
-
+									 // int _numFds;                      // Number of active fds
 
 public:
 	Server();
@@ -80,6 +81,10 @@ public:
 	void delete_channel(Channel *channel);
 	void handle_kick(int kicker_index, const std::string &argument);
 	void handle_mode(int setter_index, const std::string &argument);
+
+	// ABOUT TOPEC
+	bool findChannel(const std::string &name);
+	Client* findClient(const std::string &nickname);
 };
 
 #endif

@@ -19,8 +19,10 @@ private:
     std::vector<Client *> _members;
     std::vector<Client *> _operators;
     std::set<Client *> _users;
+    std::set<Client *> _invet;
     std::string _topic;
     std::string _key;
+
     bool hasAkey;
     bool _invite_only;     // Mode +i
     bool _topic_protected; // Mode +t
@@ -46,6 +48,9 @@ public:
     bool hasAkeys() const;
     bool checkAkey(const std::string &key) const;
 
+    // about topuck
+    const std::string getTopic() const;
+
     void add_member(Client *client);
     void remove_member(Client *client);
     bool has_member(Client *client);
@@ -61,6 +66,8 @@ public:
 
     bool is_empty();
 
+    // invet
+    void addUserInvite(Client *Client);
     // mode
     bool is_invite_only() const;
     bool is_topic_protected() const;
@@ -79,4 +86,3 @@ public:
 };
 
 #endif
-

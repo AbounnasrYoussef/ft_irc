@@ -149,3 +149,8 @@ void Client::addChannel(Channel *channel)
 // {
 // 	return Chanael;
 // }
+
+std::string Client::get_prefix() const
+{
+	return _nickname + "!" + _username + "@" + _ip;
+}
