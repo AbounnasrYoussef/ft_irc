@@ -7,14 +7,25 @@
 
 
 
+#include <vector>
+#include <map>
+#include "Channel.hpp"
 #include <sys/socket.h>
 #include <unistd.h>
 #include <poll.h>
+
+// add for othmane
+
+// #include "Channel.hpp"
+// #include "Client.hpp"
+
 #include <stdlib.h>
-#include <netdb.h>       // getnameinfo, NI_MAXHOST
-#include <sys/socket.h>  // sockaddr, sockaddr_storage
-#include <netinet/in.h>  // sockaddr_in, sockaddr_in6
-#include <arpa/inet.h>   // AF_INET, AF_INET6
+#include <netdb.h> // getnameinfo, NI_MAXHOST
+#include <map>
+#include <sys/socket.h> // sockaddr, sockaddr_storage
+#include <netinet/in.h> // sockaddr_in, sockaddr_in6
+#include "Channel.hpp"
+#include <arpa/inet.h> // AF_INET, AF_INET6
 
 class Client;
 // extern int g_num_fds;
@@ -46,9 +57,9 @@ class Server {
 	int getServerFd();
 	void Quit();
 	// Core server functions
-	void start();                     // Main server loop
-	void setupSocket();               // socket() + bind() + listen()
-	void accept_NewClient();           // accept() new connection
+	void start();					   // Main server loop
+	void setupSocket();				   // socket() + bind() + listen()
+	void accept_NewClient();		   // accept() new connection
 	void handle_ClientData(int index); // Process client messages
 	// void removeClient(int index);     // Disconnect and cleanup
 	// Bot function
@@ -60,13 +71,33 @@ class Server {
 	// void processCommand(Client* client, std::string message);
 	// void broadcastToChannel(std::string channelName, std::string message, Client* sender);
 	void processCommand(int index, std::string &message);
-	
+
 	// Utilities
-	Client* getClientByNick(std::string nickname);
+	Client *getClientByNick(std::string nickname);
 	bool isNicknameTaken(std::string nickname, int excludeIndex);
 	bool check_passok(std::string command, std::string argument, int index);
 	bool check_authentication(std::string command, std::string argument, int index);
-};
 
+	// for add channel
+	Channel *findOrCreateChannel(const std::string &name);
+
+	// youssef part
+	void handle_privmsg(int sender_index, const std::string &argument);
+	Client *get_client_by_nickname(const std::string &nickname);
+	Channel *get_channel(const std::string &name);
+	Channel *create_channel(const std::string &name);
+	void delete_channel(Channel *channel);
+	void handle_kick(int kicker_index, const std::string &argument);
+	void handle_mode(int setter_index, const std::string &argument);
+
+	// Otmane part join topic invet
+	void handel_Join(std::string &command, std::string &argument, int index);
+	void handel_Topic(std::string &command, std::string &argument, int index);
+	void handel_Invite(std::string &command, std::string &argument, int index);
+
+	// ABOUT TOPEC
+	bool findChannel(const std::string &name);
+	Client *findClient(const std::string &nickname);
+};
 
 #endif
