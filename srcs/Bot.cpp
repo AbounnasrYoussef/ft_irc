@@ -10,7 +10,8 @@ bool check_bot_command(const std::string& command)
 
 int Server::check_client_is_live(int index, std::string aragument)
 {
-	for (size_t i = 1; i < g_num_fds; i++)
+	// for (size_t i = 1; i < g_num_fds; i++)
+	for (size_t i = 1; i < this->_fds.size(); i++)
 	{
 		if (this->clients[i]->getNickname() == aragument)
 			return i;
@@ -80,7 +81,8 @@ void Server::bot(std::string &message, std::string command, std::string argument
 	{
 		std::stringstream num_clients;
 		std::stringstream port;
-		num_clients << (g_num_fds - 1); // excluding server fd
+		// num_clients << (g_num_fds - 1); // excluding server fd
+		num_clients << (this->_fds.size() - 1);
 		port << this->port;
 
 		std::string Server_Name = "🟧 Orange Pixel 🟧";

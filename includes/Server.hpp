@@ -2,7 +2,8 @@
 #define SERVER_HPP
 
 #include <iostream>
-# define MAX_CLIENTS 10 
+#include <vector>
+// # define MAX_CLIENTS 10 
 
 
 
@@ -16,7 +17,7 @@
 #include <arpa/inet.h>   // AF_INET, AF_INET6
 
 class Client;
-extern int g_num_fds;
+// extern int g_num_fds;
 
 void ft_toupper(std::string &str);
 void sendError(int fd, const std::string& msg);
@@ -28,7 +29,8 @@ class Server {
 		int port;                        // Port number
 		std::string password;            // Server password
 		char buffer[512];       // Buffer for incoming data
-		struct pollfd _fds[MAX_CLIENTS];  // Poll array
+		// struct pollfd _fds[MAX_CLIENTS];  // Poll array
+		std::vector<struct pollfd> _fds;   // Poll vector
 		// int _numFds;                      // Number of active fds
 	
 	public:
@@ -38,7 +40,8 @@ class Server {
 		Server(int port, std::string password);
 		~Server();
 	
-	Client* clients[MAX_CLIENTS];    // Array of client pointers
+	// Client* clients[MAX_CLIENTS];    // Array of client pointers
+	std::vector<Client*> clients;       // Vector of client pointers
 	// getters/setters
 	int getServerFd();
 	void Quit();

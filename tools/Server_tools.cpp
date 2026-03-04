@@ -191,7 +191,8 @@ void sendError(int fd, const std::string& msg)
 
 bool Server::isNicknameTaken(std::string nickname, int excludeIndex)
 {
-	for (int i = 1; i < g_num_fds; i++)
+	// for (int i = 1; i < g_num_fds; i++)
+	for (int i = 1; i < (int)this->_fds.size(); i++)
 	{
 		if (this->clients[i] && i != excludeIndex && this->clients[i]->getNickname() == nickname) 
 		{
@@ -209,7 +210,8 @@ int Server::getServerFd()
 void Server::Quit()
 {
 	// Close all client connections
-	for (int i = 1; i < g_num_fds; ++i)
+	// for (int i = 1; i < g_num_fds; ++i)
+	for (int i = 1; i < (int)this->clients.size(); ++i)
 	{
 		if (this->clients[i])
 		{
