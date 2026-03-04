@@ -27,7 +27,7 @@ bool is_channel(const std::string& target)
 
 Client* Server::get_client_by_nickname(const std::string& nickname)
 {
-    for (int i = 1; i < g_num_fds; i++)
+    for (int i = 1; i < this->_fds.size(); i++)
     {
         if (this->clients[i] && this->clients[i]->getNickname() == nickname)
         {

@@ -1,24 +1,23 @@
 #include "../includes/Client.hpp"
 #include "../includes/Server.hpp"
 
-void removeClient(struct pollfd fds[], Client *clients[], int &num_fds, int index)
+// void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
+// {
+// 	close(fds[index].fd);
+// 	delete clients[index];
+// 	clients[index] = NULL;
+// 	for (int i = index; i < num_fds - 1; i++) {
+// 		fds[i] = fds[i + 1];
+// 		clients[i] = clients[i + 1];
+// 	}
+// 	num_fds--;
+// }
+void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients, int index)
 {
-	// Close the connection
 	close(fds[index].fd);
-
-	// Delete the Client object
 	delete clients[index];
-	clients[index] = NULL;
-
-	// Shift both arrays
-	for (int i = index; i < num_fds - 1; i++)
-	{
-		fds[i] = fds[i + 1];
-		clients[i] = clients[i + 1];
-	}
-
-	// Decrease count
-	num_fds--;
+	fds.erase(fds.begin() + index);
+	clients.erase(clients.begin() + index);
 }
 
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len) // i nedd learn from here this function

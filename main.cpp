@@ -10,7 +10,7 @@
 #include <arpa/inet.h>   // AF_INET, AF_INET6
 #include "includes/Server.hpp"
 
-int g_num_fds = 1;
+// int g_num_fds = 1;
 
 int main(int ac, char **av)
 {

@@ -74,34 +74,25 @@ void Server::setupSocket()
 		// Cleanup and exit
 		exit(1);
 	}
-	// 4. Initialize pollfd structure
-	this->_fds[0].fd = this->server_Fd;
-	this->_fds[0].events = POLLIN;
-	this->_fds[0].revents = 0;
-
-	for (int i = 1; i < MAX_CLIENTS + 1; i++)
-	{
-		this->_fds[i].fd = -1;
-		this->_fds[i].events = 0;
-		this->_fds[i].revents = 0;
-	}
+	// 4. Initialize pollfd structure — server entry at index 0
+	// this->_fds[0].fd = this->server_Fd;
+	// this->_fds[0].events = POLLIN;
+	// this->_fds[0].revents = 0;
+	// for (int i = 1; i < MAX_CLIENTS + 1; i++) {
+	// 	this->_fds[i].fd = -1;
+	// 	this->_fds[i].events = 0;
+	// 	this->_fds[i].revents = 0;
+	// }
+	struct pollfd serverEntry;
+	serverEntry.fd = this->server_Fd;
+	serverEntry.events = POLLIN;
+	serverEntry.revents = 0;
+	this->_fds.push_back(serverEntry);
+	this->clients.push_back(NULL); // placeholder so indices align (clients[0] = server slot)
 }
 
 void Server::accept_NewClient()
 {
-	if (g_num_fds >= MAX_CLIENTS)
-	{
-		// Accept and immediately close to prevent client from waiting
-		sockaddr_storage client_addr;
-		socklen_t len = sizeof(client_addr);
-		int client_fd = accept(this->server_Fd, (sockaddr *)&client_addr, &len);
-		if (client_fd != -1)
-		{
-			sendError(client_fd, "ERROR : Server is full\r\n");
-			close(client_fd);
-		}
-		return;
-	}
 	sockaddr_storage client_addr;
 	socklen_t len = sizeof(client_addr);
 
@@ -118,25 +109,22 @@ void Server::accept_NewClient()
 	// 	return;
 	// }
 	std::string ip = getClientIP(client_addr, len);
-	// Add new client to our monitoring list
 
-	this->_fds[g_num_fds].fd = client_fd;
-	this->_fds[g_num_fds].events = POLLIN;
-	this->_fds[g_num_fds].revents = 0;
-	this->clients[g_num_fds] = new Client(client_fd);
-	this->clients[g_num_fds]->setIP(ip); // set ip of client
-	fcntl(client_fd, F_SETFL, O_NONBLOCK);
-
-	Client *client = new Client(client_fd);
-	client->setIP(getClientIP(client_addr, len));
-
-	_clients[client_fd] = client;
-
-	_fds[g_num_fds].fd = client_fd;
-	_fds[g_num_fds].events = POLLIN;
-	_fds[g_num_fds].revents = 0;
-
-	g_num_fds++; // add to array
+	// Add new client entry to vectors
+	// this->_fds[g_num_fds].fd = client_fd;
+	// this->_fds[g_num_fds].events = POLLIN;
+	// this->_fds[g_num_fds].revents = 0;
+	// this->clients[g_num_fds] = new Client(client_fd);
+	// this->clients[g_num_fds]->setIP(ip);
+	// g_num_fds++;
+	struct pollfd clientEntry;
+	clientEntry.fd = client_fd;
+	clientEntry.events = POLLIN;
+	clientEntry.revents = 0;
+	this->_fds.push_back(clientEntry);
+	Client* newClient = new Client(client_fd);
+	newClient->setIP(ip);
+	this->clients.push_back(newClient);
 }
 
 void Server::handle_ClientData(int index)
@@ -150,7 +138,8 @@ void Server::handle_ClientData(int index)
 		if (bytes == 0)
 		{
 			// Client disconnected
-			removeClient(this->_fds, clients, g_num_fds, index);
+			// removeClient(this->_fds, clients, g_num_fds, index);
+			removeClient(this->_fds, clients, index);
 			return;
 		}
 
@@ -159,7 +148,8 @@ void Server::handle_ClientData(int index)
 			// Error reading - close connection
 			write(2, "Error reading data. Closing connection.\n", 41);
 			close(this->_fds[index].fd);
-			removeClient(this->_fds, clients, g_num_fds, index);
+			// removeClient(this->_fds, clients, g_num_fds, index);
+			removeClient(this->_fds, clients, index);
 			return;
 		}
 
@@ -202,7 +192,8 @@ void Server::start()
 	setupSocket();
 	while (true)
 	{
-		int ret = poll(this->_fds, g_num_fds, -1); // -1 = wait forever
+		// int ret = poll(this->_fds, g_num_fds, -1);  // -1 = wait forever
+		int ret = poll(&this->_fds[0], this->_fds.size(), -1);
 		if (ret == -1)
 		{
 			// Error - clean up and exit
@@ -218,7 +209,8 @@ void Server::start()
 				accept_NewClient();
 			}
 			// check for client data
-			for (int i = 1; i < g_num_fds; i++)
+			// for (int i = 1; i < g_num_fds; i++)
+			for (int i = 1; i < (int)this->_fds.size(); i++)
 			{
 				if (this->_fds[i].revents & POLLIN)
 				{
@@ -227,7 +219,8 @@ void Server::start()
 				else if (this->_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
 				{
 					// Client disconnected or error
-					removeClient(this->_fds, clients, g_num_fds, i);
+					// removeClient(this->_fds, clients, g_num_fds, i);
+					removeClient(this->_fds, clients, i);
 					close(this->_fds[i].fd);
 					i--; // Adjust index after removal
 				}

@@ -9,7 +9,7 @@ CFLAGS = #-Wall -Wextra -Werror -std=c++98
 # 		srcs/Channel.cpp
 # =======
 SRC = main.cpp srcs/Server.cpp  srcs/Channel.cpp  srcs/Client.cpp tools/Client_tools.cpp tools/Server_tools.cpp tools/privmsg.cpp  tools/kick.cpp tools/mode.cpp \
-		tools/Join.cpp tools/Topic.cpp tools/Invite.cpp
+		tools/Join.cpp tools/Topic.cpp tools/Invite.cpp srcs/Bot.cpp 
 # >>>>>>> youssef
 
 OBJ = $(SRC:.cpp=.o)

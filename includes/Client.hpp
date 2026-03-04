@@ -3,6 +3,7 @@
 
 
 #include <iostream>
+#include <vector>
 #include "Server.hpp"
 #include <set> // OTHMANE ADDTHIS FOR join
 #include <sstream> // for iss
@@ -14,11 +15,8 @@
 #include <netdb.h>
 class Channel;
 class Client;
-void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
-
-
-class Server;
-
+// void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
+void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients, int index);
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
 // bool massage_complet(std::string buffer);
 bool pars_nick(std::string _nickname);
