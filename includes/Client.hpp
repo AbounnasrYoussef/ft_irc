@@ -23,12 +23,12 @@ class Client {
 		std::string _realname;      // Real name
 		std::string _buffer;        // Message buffer (for partial messages)
 		std::string _ip;   
-		std::set<Channel*> _channels;           // IP of client 
 		bool _passOk;               // Password authenticated?
 		bool _welcomeSent; 		// Welcome message sent?
 		// bool _registered;           // Fully registered? (PASS + NICK + USER) // no need
 		
-	public:
+		public:
+		std::set<Channel*> _channels;           // IP of client 
 		Client(int fd);
 		~Client();
 		std::string _password;            // Password

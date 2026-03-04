@@ -8,10 +8,10 @@
 #include <sys/socket.h>  // sockaddr, sockaddr_storage
 #include <netinet/in.h>  // sockaddr_in, sockaddr_in6
 #include <arpa/inet.h>   // AF_INET, AF_INET6
-#include "includes/Server.hpp"
-
+// #include "includes/Server.hpp"
+#include "/home/nbougrin/ft_irc/includes/Server.hpp"
 // int g_num_fds = 1;
-
+// class Server;
 bool ft_isdigit(char *str)
 {
 	while (*str)

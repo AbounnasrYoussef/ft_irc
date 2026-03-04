@@ -1,273 +1,253 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <poll.h>
-#include <stdlib.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include "../includes/Client.hpp"
 #include "../includes/Server.hpp"
-#include "fcntl.h"
+#include "../includes/Client.hpp"
+#include "../includes/Channel.hpp"
 
-// #include "Client.hpp"
-class Channel;
-class Client;
+int g_num_fds = 1;
 
-Server::~Server()
+void sendError(int fd, const std::string& msg)
 {
-	close(this->server_Fd);
+    send(fd, msg.c_str(), msg.size(), 0);
 }
 
 Server::Server(int port, std::string password)
+    : _serverFd(-1), _password(password), port(port)
 {
-	this->port = port;
-	this->password = password; // add \r\n to password for comparison
-	this->server_Fd = -1;
 }
 
-void Server::setupSocket()
+Server::~Server()
 {
-	// this->_
-	// this->_serverFd
-	int pp = 1;
-	this->server_Fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (this->server_Fd == -1)
-	{
-		std::cerr << "Error: Failed to create socket" << std::endl;
-		// Cleanup and exit
-		exit(1);
-	}
-	if (fcntl(this->server_Fd, F_SETFL, O_NONBLOCK) == -1)
-	{
-		std::cerr << "Error: Failed to set server socket to non-blocking" << std::endl;
-		close(this->server_Fd);
-		// Cleanup and exit
-		exit(1);
-	}
-	if (setsockopt(this->server_Fd, SOL_SOCKET, SO_REUSEADDR, &pp, sizeof(int)) == -1) // to reuse address immediately after close
-	{
-		std::cerr << "Error: Failed setsockopt" << std::endl;
-		close(this->server_Fd);
-		// Cleanup and exit
-		exit(1);
-	}
-	// 2. Bind to port
-	struct sockaddr_in address; /// socket(ip:port) for this process
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(this->port);
-
-	if (bind(this->server_Fd, (struct sockaddr *)&address, sizeof(address)) == -1)
-	{
-		std::cerr << "Error: Failed to bind to port " << this->port << std::endl;
-		close(this->server_Fd);
-		// Cleanup and exit
-		exit(1);
-	}
-
-	// 3. Start listening
-	if (listen(this->server_Fd, 3) == -1) // am ready to accept connections (work) (10.50.20.7:6667)
-	{
-		std::cerr << "Error: Failed to listen on socket " << this->port << std::endl;
-		close(this->server_Fd);
-		// Cleanup and exit
-		exit(1);
-	}
-	// 4. Initialize pollfd structure — server entry at index 0
-	// this->_fds[0].fd = this->server_Fd;
-	// this->_fds[0].events = POLLIN;
-	// this->_fds[0].revents = 0;
-	// for (int i = 1; i < MAX_CLIENTS + 1; i++) {
-	// 	this->_fds[i].fd = -1;
-	// 	this->_fds[i].events = 0;
-	// 	this->_fds[i].revents = 0;
-	// }
-	struct pollfd serverEntry;
-	serverEntry.fd = this->server_Fd;
-	serverEntry.events = POLLIN;
-	serverEntry.revents = 0;
-	this->_fds.push_back(serverEntry);
-	this->clients.push_back(NULL); // placeholder so indices align (clients[0] = server slot)
+    for (size_t i = 1; i < clients.size(); i++) {
+        if (clients[i]) {
+            close(clients[i]->get_fd());
+            delete clients[i];
+        }
+    }
+    for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+        delete it->second;
+    if (_serverFd != -1)
+        close(_serverFd);
 }
 
-void Server::accept_NewClient()
+Channel* Server::findChannel(const std::string& name)
 {
-	sockaddr_storage client_addr;
-	socklen_t len = sizeof(client_addr);
-
-	int client_fd = accept(this->server_Fd, (sockaddr *)&client_addr, &len);
-	if (client_fd == -1)
-	{
-		// Error accepting new client
-		return;
-	}
-	// if (fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1)
-	// {
-	// 	std::cerr << "Error: Failed to set client socket to non-blocking" << std::endl;
-	// 	close(client_fd);
-	// 	return;
-	// }
-	std::string ip = getClientIP(client_addr, len);
-
-	// Add new client entry to vectors
-	// this->_fds[g_num_fds].fd = client_fd;
-	// this->_fds[g_num_fds].events = POLLIN;
-	// this->_fds[g_num_fds].revents = 0;
-	// this->clients[g_num_fds] = new Client(client_fd);
-	// this->clients[g_num_fds]->setIP(ip);
-	// g_num_fds++;
-	struct pollfd clientEntry;
-	clientEntry.fd = client_fd;
-	clientEntry.events = POLLIN;
-	clientEntry.revents = 0;
-	this->_fds.push_back(clientEntry);
-	Client* newClient = new Client(client_fd);
-	newClient->setIP(ip);
-	this->clients.push_back(newClient);
+    return get_channel(name);
 }
 
-void Server::handle_ClientData(int index)
+Channel* Server::findOrCreateChannel(const std::string& name)
 {
-	//  Process client messages for the specific client at index
+    Channel* ch = get_channel(name);
+    if (ch)
+        return ch;
+    return create_channel(name);
+}
 
-	if (this->_fds[index].revents & POLLIN) // need check pollout too
-	{
-		int bytes = read(this->_fds[index].fd, this->buffer, 511); // Read max 511 to leave room for null terminator
+Client* Server::findClient(const std::string& nickname)
+{
+    for (size_t i = 1; i < clients.size(); i++) {
+        if (clients[i] && clients[i]->getNickname() == nickname)
+            return clients[i];
+    }
+    return NULL;
+}
 
-		if (bytes == 0)
-		{
-			// Client disconnected
-			// removeClient(this->_fds, clients, g_num_fds, index);
-			removeClient(this->_fds, clients, index);
-			return;
-		}
+static bool parse_irc_line(const std::string& line, std::string& cmd, std::string& arg)
+{
+    size_t i = 0;
+    while (i < line.size() && (line[i] == ' ' || line[i] == '\r' || line[i] == '\n')) i++;
+    if (i == line.size()) return false;
 
-		if (bytes == -1)
-		{
-			// Error reading - close connection
-			write(2, "Error reading data. Closing connection.\n", 41);
-			close(this->_fds[index].fd);
-			// removeClient(this->_fds, clients, g_num_fds, index);
-			removeClient(this->_fds, clients, index);
-			return;
-		}
+    size_t start = i;
+    while (i < line.size() && line[i] != ' ' && line[i] != '\r' && line[i] != '\n') i++;
+    cmd = line.substr(start, i - start);
 
-		// Null terminate the buffer
-		this->buffer[bytes] = '\0';
+    while (i < line.size() && line[i] == ' ') i++;
+    size_t arg_end = line.size();
+    while (arg_end > i && (line[arg_end - 1] == '\r' || line[arg_end - 1] == '\n')) arg_end--;
+    arg = (i < arg_end) ? line.substr(i, arg_end - i) : "";
 
-		// Append new data to client's buffer
-		this->clients[index]->appendBuffer(std::string(this->buffer, bytes));
-
-		// Get the full buffer and process complete messages
-		std::string full_Buffer = this->clients[index]->getBuffer();
-		size_t pos;
-
-		// Process all complete messages (ending with \r\n)
-		while ((pos = full_Buffer.find("\r\n")) != std::string::npos)
-		{
-			// Extract complete message
-			std::string message = full_Buffer.substr(0, pos);
-
-			// Remove processed message from buffer
-			full_Buffer = full_Buffer.substr(pos + 2);
-
-			// Process the complete message
-				// std::cout << "Complete message: [" << message << "]" << std::endl;  // for debug
-				// int i = 1;
-					int i = 1;
-				while (!message.empty())
-				{
-					// std::cout << "number " << i << "[" << message << "]" << std::endl; // Debug line
-					// i++;
-					processCommand(index, message);
-				}		
-		}
-
-		// Update client's buffer with remaining unprocessed data
-		this->clients[index]->setBuffer(full_Buffer);
-	}
+    return !cmd.empty();
 }
 
 void Server::start()
 {
-	setupSocket();
-	while (true)
-	{
-		// int ret = poll(this->_fds, g_num_fds, -1);  // -1 = wait forever
-		int ret = poll(&this->_fds[0], this->_fds.size(), -1);
-		if (ret == -1)
-		{
-			// Error - clean up and exit
-			exit(0);
-		}
-		if (ret > 0)
-		{
-			// There are events to process
+    _serverFd = socket(AF_INET, SOCK_STREAM, 0);
+    if (_serverFd < 0) {
+        std::cerr << "Error: socket() failed" << std::endl;
+        return;
+    }
 
-			// check for new connections
-			if (this->_fds[0].revents & POLLIN)
-			{
-				accept_NewClient();
-			}
-			// check for client data
-			// for (int i = 1; i < g_num_fds; i++)
-			for (int i = 1; i < (int)this->_fds.size(); i++)
-			{
-				if (this->_fds[i].revents & POLLIN)
-				{
-					handle_ClientData(i);
-				}
-				else if (this->_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
-				{
-					// Client disconnected or error
-					// removeClient(this->_fds, clients, g_num_fds, i);
-					removeClient(this->_fds, clients, i);
-					close(this->_fds[i].fd);
-					i--; // Adjust index after removal
-				}
-			}
-		}
-	}
-}
+    int opt = 1;
+    setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    fcntl(_serverFd, F_SETFL, O_NONBLOCK);
 
-// function to add and creat channel of the JOIN
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = htons(port);
 
-Channel *Server::findOrCreateChannel(const std::string &name)
-{
-	if (_channels.find(name) != _channels.end())
-	{
-		return _channels[name];
-	}
-	else
-	{
-		Channel *newChan = new Channel(name);
-		_channels[name] = newChan;
-		return newChan;
-	}
-}
-bool Server::findChannel(const std::string &name)
-{
-	if (_channels.find(name) != _channels.end())
-	{
-		return true;
-	}
-	else
-		return false;
-}
-Client *Server::findClient(const std::string &nickname)
-{
-	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		Client *client = it->second;
-		if (!client)
-		{
-			continue;
-		}
-		if (client->getNickname() == nickname)
-		{
-			return client;
-		}
-	}
-	return nullptr;
+    if (bind(_serverFd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        std::cerr << "Error: bind() failed on port " << port << std::endl;
+        close(_serverFd);
+        return;
+    }
+
+    if (listen(_serverFd, 10) < 0) {
+        std::cerr << "Error: listen() failed" << std::endl;
+        close(_serverFd);
+        return;
+    }
+
+    std::cout << "ft_irc server started on port " << port << std::endl;
+
+    struct pollfd server_pfd;
+    server_pfd.fd = _serverFd;
+    server_pfd.events = POLLIN;
+    server_pfd.revents = 0;
+    _fds.push_back(server_pfd);
+    clients.push_back(NULL);
+    g_num_fds = 1;
+
+    while (true) {
+        int ret = poll(&_fds[0], _fds.size(), -1);
+        if (ret < 0) {
+            std::cerr << "Error: poll() failed" << std::endl;
+            break;
+        }
+
+        // Accept new connections
+        if (_fds[0].revents & POLLIN) {
+            struct sockaddr_storage caddr;
+            socklen_t clen = sizeof(caddr);
+            int cfd = accept(_serverFd, (struct sockaddr*)&caddr, &clen);
+            if (cfd >= 0) {
+                fcntl(cfd, F_SETFL, O_NONBLOCK);
+                struct pollfd pfd;
+                pfd.fd = cfd;
+                pfd.events = POLLIN;
+                pfd.revents = 0;
+                _fds.push_back(pfd);
+                Client* c = new Client(cfd);
+                c->setIP(getClientIP(caddr, clen));
+                clients.push_back(c);
+                g_num_fds = (int)_fds.size();
+                std::cout << "Client connected: fd=" << cfd << std::endl;
+            }
+        }
+
+        // Handle existing clients
+        for (size_t i = 1; i < _fds.size(); i++) {
+            if (!(_fds[i].revents & POLLIN))
+                continue;
+
+            char buf[512];
+            memset(buf, 0, sizeof(buf));
+            int bytes = recv(_fds[i].fd, buf, sizeof(buf) - 1, 0);
+
+            if (bytes <= 0) {
+                std::cout << "Client disconnected: fd=" << _fds[i].fd << std::endl;
+                close(_fds[i].fd);
+                delete clients[i];
+                clients.erase(clients.begin() + i);
+                _fds.erase(_fds.begin() + i);
+                g_num_fds = (int)_fds.size();
+                i--;
+                continue;
+            }
+
+            clients[i]->appendBuffer(std::string(buf, bytes));
+
+            std::string working = clients[i]->getBuffer();
+            clients[i]->clearBuffer();
+
+            bool removed = false;
+            size_t pos;
+            while ((pos = working.find('\n')) != std::string::npos) {
+                std::string line = working.substr(0, pos + 1);
+                working = working.substr(pos + 1);
+
+                std::string cmd, arg;
+                if (!parse_irc_line(line, cmd, arg))
+                    continue;
+
+                ft_toupper(cmd);
+
+                if (!cmd.empty() && cmd[0] == '!') {
+                    std::string dummy;
+                    bot(dummy, cmd, arg, i);
+                    continue;
+                }
+
+                if (cmd == "PASS") {
+                    if (!clients[i]->isPassOk()) {
+                        if (arg == _password)
+                            clients[i]->setPassOk(true);
+                        else
+                            sendError(_fds[i].fd, ":server 464 * :Password incorrect\r\n");
+                    }
+                } else if (cmd == "NICK") {
+                    if (arg.empty()) {
+                        sendError(_fds[i].fd, ":server 431 * :No nickname given\r\n");
+                    } else if (!pars_nick(arg)) {
+                        sendError(_fds[i].fd, ":server 432 * " + arg + " :Erroneous nickname\r\n");
+                    } else {
+                        bool taken = false;
+                        for (size_t j = 1; j < clients.size(); j++) {
+                            if (j != i && clients[j] && clients[j]->getNickname() == arg) {
+                                taken = true;
+                                break;
+                            }
+                        }
+                        if (taken)
+                            sendError(_fds[i].fd, ":server 433 * " + arg + " :Nickname is already in use\r\n");
+                        else
+                            clients[i]->setNickname(arg);
+                    }
+                } else if (cmd == "USER") {
+                    if (!user_parsing(arg, clients[i]))
+                        sendError(_fds[i].fd, ":server 461 * USER :Not enough parameters\r\n");
+                } else if (cmd == "QUIT") {
+                    sendError(_fds[i].fd, "ERROR :Closing Link\r\n");
+                    close(_fds[i].fd);
+                    delete clients[i];
+                    clients.erase(clients.begin() + i);
+                    _fds.erase(_fds.begin() + i);
+                    g_num_fds = (int)_fds.size();
+                    removed = true;
+                    i--;
+                    break;
+                } else if (cmd == "PING") {
+                    std::string pong = ":server PONG server :" + arg + "\r\n";
+                    send(_fds[i].fd, pong.c_str(), pong.size(), 0);
+                } else if (!clients[i]->isRegistered()) {
+                    sendError(_fds[i].fd, ":server 451 * :You have not registered\r\n");
+                } else if (cmd == "JOIN") {
+                    handel_Join(cmd, arg, i);
+                } else if (cmd == "PRIVMSG") {
+                    handle_privmsg(i, arg);
+                } else if (cmd == "KICK") {
+                    handle_kick(i, arg);
+                } else if (cmd == "MODE") {
+                    handle_mode(i, arg);
+                } else if (cmd == "TOPIC") {
+                    handel_Topic(cmd, arg, i);
+                } else if (cmd == "INVITE") {
+                    handel_Invite(cmd, arg, i);
+                } else {
+                    sendError(_fds[i].fd, ":server 421 * " + cmd + " :Unknown command\r\n");
+                }
+
+                // Send welcome after first complete registration
+                if (!removed && clients[i]->isRegistered() && !clients[i]->isWelcomeSent()) {
+                    clients[i]->setWelcomeSent(true);
+                    std::string nick = clients[i]->getNickname();
+                    std::string w = ":server 001 " + nick + " :Welcome to ft_irc, " + nick + "!\r\n";
+                    send(_fds[i].fd, w.c_str(), w.size(), 0);
+                }
+            }
+
+            if (!removed && !working.empty())
+                clients[i]->appendBuffer(working);
+        }
+    }
 }

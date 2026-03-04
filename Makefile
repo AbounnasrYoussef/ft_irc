@@ -2,24 +2,21 @@ NAME = ircserv
 
 CC = c++
 
-CFLAGS = -g3 -fsanitize=address #-Wall -Wextra -Werror -std=c++98
+CFLAGS = -g3 -fsanitize=address -Iincludes
 
-# <<<<<<< HEAD
-# SRC = main.cpp srcs/Server.cpp srcs/Client.cpp tools/Client_tools.cpp tools/Server_tools.cpp \
-# 		srcs/Channel.cpp
-# =======
-SRC = main.cpp srcs/Server.cpp  srcs/Channel.cpp  srcs/Client.cpp tools/Client_tools.cpp tools/Server_tools.cpp tools/privmsg.cpp  tools/kick.cpp tools/mode.cpp \
-		tools/Join.cpp tools/Topic.cpp tools/Invite.cpp srcs/Bot.cpp tools/tools.cpp
-# >>>>>>> youssef
+SRC = main.cpp srcs/Server.cpp srcs/Channel.cpp srcs/Client.cpp \
+      tools/Client_tools.cpp tools/Server_tools.cpp tools/privmsg.cpp \
+      tools/kick.cpp tools/mode.cpp tools/Join.cpp tools/Topic.cpp \
+      tools/Invite.cpp srcs/Bot.cpp tools/tools.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)
 
-$(NAME): $(OBJ) 
+$(NAME): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
-%.o: %.cpp includes/Channel.hpp includes/Client.hpp  includes/Server.hpp 
+%.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

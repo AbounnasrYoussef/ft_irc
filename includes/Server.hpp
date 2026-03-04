@@ -1,103 +1,69 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <iostream>
-#include <vector>
-// # define MAX_CLIENTS 10 
-
-
-
+#include <string>
 #include <vector>
 #include <map>
-#include "Channel.hpp"
-#include <sys/socket.h>
-#include <unistd.h>
 #include <poll.h>
-
-// add for othmane
-
-// #include "Channel.hpp"
-// #include "Client.hpp"
-
-#include <stdlib.h>
-#include <netdb.h> // getnameinfo, NI_MAXHOST
-#include <map>
-#include <sys/socket.h> // sockaddr, sockaddr_storage
-#include <netinet/in.h> // sockaddr_in, sockaddr_in6
-#include "Channel.hpp"
-#include <arpa/inet.h> // AF_INET, AF_INET6
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
 
 class Client;
-// extern int g_num_fds;
+class Channel;
 
-void ft_toupper(std::string &str);
+extern int g_num_fds;
+
 void sendError(int fd, const std::string& msg);
-bool isalpha_string(std::string str);
+void ft_toupper(std::string &str);
 
 class Server {
-	private:
-		int server_Fd;                    // Server socket fd
-		int port;                        // Port number
-		std::string password;            // Server password
-		char buffer[512];       // Buffer for incoming data
-		// struct pollfd _fds[MAX_CLIENTS];  // Poll array
-		std::vector<struct pollfd> _fds;   // Poll vector
-		// int _numFds;                      // Number of active fds
-	
-	public:
-		Server();
-		Server(const Server& other);
-		Server& operator=(const Server& other);
-		Server(int port, std::string password);
-		~Server();
-	
-	// Client* clients[MAX_CLIENTS];    // Array of client pointers
-	std::vector<Client*> clients;       // Vector of client pointers
-	// getters/setters
-	int getServerFd();
-	void Quit();
-	// Core server functions
-	void start();					   // Main server loop
-	void setupSocket();				   // socket() + bind() + listen()
-	void accept_NewClient();		   // accept() new connection
-	void handle_ClientData(int index); // Process client messages
-	// void removeClient(int index);     // Disconnect and cleanup
-	// Bot function
-	void bot(std::string &message, std::string command, std::string argument, int index);
-	int check_client_is_live(int index, std::string aragument);
+private:
+    int         _serverFd;
+    std::string _password;
+    std::map<std::string, Channel*> _channels;
 
-	
-	// Message handling
-	// void processCommand(Client* client, std::string message);
-	// void broadcastToChannel(std::string channelName, std::string message, Client* sender);
-	void processCommand(int index, std::string &message);
+public:
+    int                       port;
+    std::vector<struct pollfd> _fds;
+    std::vector<Client*>      clients;
 
-	// Utilities
-	Client *getClientByNick(std::string nickname);
-	bool isNicknameTaken(std::string nickname, int excludeIndex);
-	bool check_passok(std::string command, std::string argument, int index);
-	bool check_authentication(std::string command, std::string argument, int index);
+    Server(int port, std::string password);
+    ~Server();
 
-	// for add channel
-	Channel *findOrCreateChannel(const std::string &name);
+    void start();
 
-	// youssef part
-	void handle_privmsg(int sender_index, const std::string &argument);
-	Client *get_client_by_nickname(const std::string &nickname);
-	Channel *get_channel(const std::string &name);
-	Channel *create_channel(const std::string &name);
-	void delete_channel(Channel *channel);
-	void handle_kick(int kicker_index, const std::string &argument);
-	void handle_mode(int setter_index, const std::string &argument);
+    // Bot
+    int  check_client_is_live(int index, std::string argument);
+    void bot(std::string &message, std::string command, std::string argument, int index);
 
-	// Otmane part join topic invet
-	void handel_Join(std::string &command, std::string &argument, int index);
-	void handel_Topic(std::string &command, std::string &argument, int index);
-	void handel_Invite(std::string &command, std::string &argument, int index);
+    // IRC commands
+    void    handel_Invite(std::string &command, std::string &argument, int index);
+    void    handel_Join(std::string &command, std::string &argument, int index);
+    void    handle_kick(int kicker_index, const std::string& argument);
+    void    handle_mode(int setter_index, const std::string& argument);
+    Client* get_client_by_nickname(const std::string& nickname);
+    void    handle_privmsg(int sender_index, const std::string& argument);
+    void    handel_Topic(std::string &command, std::string &argument, int index);
 
-	// ABOUT TOPEC
-	bool findChannel(const std::string &name);
-	Client *findClient(const std::string &nickname);
+    // Channel helpers
+    Channel* findChannel(const std::string& name);
+    Channel* findOrCreateChannel(const std::string& name);
+    Client*  findClient(const std::string& nickname);
+    Channel* get_channel(const std::string& name);
+    Channel* create_channel(const std::string& name);
+    void     delete_channel(Channel* channel);
 };
+
+#include "Client.hpp"
+#include "Channel.hpp"
 
 #endif
