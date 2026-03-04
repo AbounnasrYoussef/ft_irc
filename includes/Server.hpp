@@ -82,9 +82,14 @@ public:
 	void handle_kick(int kicker_index, const std::string &argument);
 	void handle_mode(int setter_index, const std::string &argument);
 
+	// Otmane part join topic invet
+	void handel_Join(std::string &command, std::string &argument, int index);
+	void handel_Topic(std::string &command, std::string &argument, int index);
+	void handel_Invite(std::string &command, std::string &argument, int index);
+
 	// ABOUT TOPEC
 	bool findChannel(const std::string &name);
-	Client* findClient(const std::string &nickname);
+	Client *findClient(const std::string &nickname);
 };
 
 #endif
