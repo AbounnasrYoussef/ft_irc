@@ -2,20 +2,21 @@
 #include "../includes/Client.hpp"
 #include "../includes/Channel.hpp"
 #include "../includes/Commands.hpp"
+#include <sstream>
+#include <cstdlib>
 
-// Fonction pour afficher les modes actuels
-void send_channel_modes(Client* client, Channel* channel)
+// Send current channel modes to a client
+static void send_channel_modes(Client *client, Channel *channel)
 {
     std::string modes = "+";
-    
-    if (channel->is_invite_only()) modes += "i";
+
+    if (channel->is_invite_only())    modes += "i";
     if (channel->is_topic_protected()) modes += "t";
-    if (channel->is_moderated()) modes += "m";
-    if (channel->is_no_external()) modes += "n";
-    
-    if (modes == "+")
-        modes = "+";  // Pas de modes
-    
+    if (channel->is_moderated())      modes += "m";
+    if (channel->is_no_external())    modes += "n";
+    if (channel->hasAkeys())          modes += "k";
+    if (channel->get_user_limit() > 0) modes += "l";
+
     std::string response = ":server 324 ";
     response += client->getNickname();
     response += " ";
@@ -23,63 +24,86 @@ void send_channel_modes(Client* client, Channel* channel)
     response += " ";
     response += modes;
     response += "\r\n";
-    
+
     send(client->get_fd(), response.c_str(), response.length(), 0);
 }
 
-ParsedMode parse_mode_arguments(const std::string& argument)
+/*
+** Parse MODE argument.
+** Format: <channel> [+/-modes] [param1] [param2] ...
+**
+** Modes requiring a parameter:
+**   +o <nick>    — give operator status
+**   -o <nick>    — remove operator status
+**   +k <key>     — set channel key
+**   -k           — remove channel key (no parameter needed)
+**   +l <limit>   — set user limit
+**   -l           — remove user limit (no parameter needed)
+**
+** Modes without parameter: i, t, m, n
+*/
+static ParsedMode parse_mode_arguments(const std::string &argument)
 {
     ParsedMode result;
     result.valid = false;
-    
-    // 1. Split par espace
+
     size_t space_pos = argument.find(' ');
-    
+
     if (space_pos == std::string::npos)
     {
-        // Juste le channel, pas de modes (consultation)
+        // Only channel name — query mode
         result.channel = argument;
         trim(result.channel);
         result.valid = true;
         return result;
     }
-    
+
     result.channel = argument.substr(0, space_pos);
     trim(result.channel);
-    
-    std::string modes_and_params = argument.substr(space_pos + 1);
-    trim(modes_and_params);
-    
-    // 2. Parser la chaîne de modes (ex: "+it", "-o", "+k")
-    if (modes_and_params.empty())
+
+    std::string rest = argument.substr(space_pos + 1);
+    trim(rest);
+
+    if (rest.empty())
     {
         result.valid = true;
         return result;
     }
-    
-    // 3. Séparer les modes des paramètres
-    size_t next_space = modes_and_params.find(' ');
+
+    // Separate mode string from parameters
+    size_t next_space = rest.find(' ');
     std::string mode_string;
     std::string params_string;
-    
+
     if (next_space == std::string::npos)
     {
-        mode_string = modes_and_params;
+        mode_string = rest;
         params_string = "";
     }
     else
     {
-        mode_string = modes_and_params.substr(0, next_space);
-        params_string = modes_and_params.substr(next_space + 1);
+        mode_string = rest.substr(0, next_space);
+        params_string = rest.substr(next_space + 1);
+        trim(params_string);
     }
-    
-    // 4. Parser la chaîne de modes caractère par caractère
-    bool adding = true;  // Par défaut +
-    
+
+    // Split params_string into a list of tokens
+    std::vector<std::string> params;
+    {
+        std::istringstream iss(params_string);
+        std::string token;
+        while (iss >> token)
+            params.push_back(token);
+    }
+
+    // Parse mode characters and assign parameters
+    bool adding = true;
+    size_t param_idx = 0;
+
     for (size_t i = 0; i < mode_string.length(); i++)
     {
         char c = mode_string[i];
-        
+
         if (c == '+')
         {
             adding = true;
@@ -90,30 +114,36 @@ ParsedMode parse_mode_arguments(const std::string& argument)
         }
         else
         {
-            // C'est un mode (i, t, o, k, l, etc.)
             ModeChange change;
             change.mode = c;
             change.adding = adding;
             change.param = "";
-            
+
+            // Modes that require a parameter when adding (or for -o)
+            if ((c == 'o' || (adding && (c == 'k' || c == 'l'))))
+            {
+                if (param_idx < params.size())
+                {
+                    change.param = params[param_idx];
+                    param_idx++;
+                }
+            }
+
             result.changes.push_back(change);
         }
     }
-    
-    // 5. Associer les paramètres aux modes qui en ont besoin
-    // Pour l'instant, on laisse vide, on le fera après
-    
+
     result.valid = true;
     return result;
 }
 
-void Server::handle_mode(int setter_index, const std::string& argument)
+void Server::handle_mode(int setter_index, const std::string &argument)
 {
-    Client* setter = this->clients[setter_index];
-    
-    // 1. Parser
+    Client *setter = this->clients[setter_index];
+
+    // 1. Parse
     ParsedMode parsed = parse_mode_arguments(argument);
-    
+
     if (!parsed.valid)
     {
         std::string error = ":server 461 ";
@@ -122,9 +152,9 @@ void Server::handle_mode(int setter_index, const std::string& argument)
         sendError(setter->get_fd(), error);
         return;
     }
-    
-    // 2. Trouver le channel
-    Channel* channel = this->get_channel(parsed.channel);
+
+    // 2. Find channel
+    Channel *channel = this->get_channel(parsed.channel);
     if (!channel)
     {
         std::string error = ":server 403 ";
@@ -135,16 +165,17 @@ void Server::handle_mode(int setter_index, const std::string& argument)
         sendError(setter->get_fd(), error);
         return;
     }
-    
-    // 3. Si pas de modes, afficher les modes actuels (consultation)
+
+    // 3. If no modes — just display current modes
     if (parsed.changes.empty())
     {
         send_channel_modes(setter, channel);
         return;
     }
-    
-    // 4. Vérifier que setter est dans le channel
-    if (!channel->has_member(setter))
+
+    // 4. Setter must be in the channel
+    //    Use hasUser() — consistent with JOIN which uses addUser()/_users
+    if (!channel->hasUser(setter))
     {
         std::string error = ":server 442 ";
         error += setter->getNickname();
@@ -154,8 +185,8 @@ void Server::handle_mode(int setter_index, const std::string& argument)
         sendError(setter->get_fd(), error);
         return;
     }
-    
-    // 5. Vérifier que setter est opérateur
+
+    // 5. Setter must be operator
     if (!channel->is_operator(setter))
     {
         std::string error = ":server 482 ";
@@ -166,14 +197,15 @@ void Server::handle_mode(int setter_index, const std::string& argument)
         sendError(setter->get_fd(), error);
         return;
     }
-    
-    // 6. Appliquer chaque mode
+
+    // 6. Apply each mode change
     std::string applied_modes = "";
-    
+    std::string applied_params = "";
+
     for (size_t i = 0; i < parsed.changes.size(); i++)
     {
-        ModeChange& change = parsed.changes[i];
-        
+        ModeChange &change = parsed.changes[i];
+
         if (change.mode == 'i')
         {
             channel->set_invite_only(change.adding);
@@ -194,9 +226,98 @@ void Server::handle_mode(int setter_index, const std::string& argument)
             channel->set_no_external(change.adding);
             applied_modes += change.adding ? "+n" : "-n";
         }
+        else if (change.mode == 'o')
+        {
+            if (change.param.empty())
+            {
+                std::string error = ":server 461 ";
+                error += setter->getNickname();
+                error += " MODE :Not enough parameters\r\n";
+                sendError(setter->get_fd(), error);
+                continue;
+            }
+
+            Client *target = this->get_client_by_nickname(change.param);
+            if (!target || !channel->hasUser(target))
+            {
+                std::string error = ":server 441 ";
+                error += setter->getNickname();
+                error += " ";
+                error += change.param;
+                error += " ";
+                error += parsed.channel;
+                error += " :They aren't on that channel\r\n";
+                sendError(setter->get_fd(), error);
+                continue;
+            }
+
+            if (change.adding)
+                channel->add_operator(target);
+            else
+                channel->remove_operator(target);
+
+            applied_modes += change.adding ? "+o" : "-o";
+            applied_params += " ";
+            applied_params += change.param;
+        }
+        else if (change.mode == 'k')
+        {
+            if (change.adding)
+            {
+                if (change.param.empty())
+                {
+                    std::string error = ":server 461 ";
+                    error += setter->getNickname();
+                    error += " MODE :Not enough parameters\r\n";
+                    sendError(setter->get_fd(), error);
+                    continue;
+                }
+                channel->setAkey(change.param);
+                applied_modes += "+k";
+                applied_params += " ";
+                applied_params += change.param;
+            }
+            else
+            {
+                // -k removes the key
+                channel->setAkey("");
+                applied_modes += "-k";
+            }
+        }
+        else if (change.mode == 'l')
+        {
+            if (change.adding)
+            {
+                if (change.param.empty())
+                {
+                    std::string error = ":server 461 ";
+                    error += setter->getNickname();
+                    error += " MODE :Not enough parameters\r\n";
+                    sendError(setter->get_fd(), error);
+                    continue;
+                }
+                int limit = std::atoi(change.param.c_str());
+                if (limit <= 0)
+                {
+                    std::string error = ":server 461 ";
+                    error += setter->getNickname();
+                    error += " MODE :Invalid limit parameter\r\n";
+                    sendError(setter->get_fd(), error);
+                    continue;
+                }
+                channel->set_user_limit(limit);
+                applied_modes += "+l";
+                applied_params += " ";
+                applied_params += change.param;
+            }
+            else
+            {
+                channel->set_user_limit(0);
+                applied_modes += "-l";
+            }
+        }
         else
         {
-            // Mode inconnu, ignorer ou erreur
             std::string error = ":server 472 ";
             error += setter->getNickname();
             error += " ";
@@ -205,8 +326,8 @@ void Server::handle_mode(int setter_index, const std::string& argument)
             sendError(setter->get_fd(), error);
         }
     }
-    
-    // 7. Notifier tous les membres
+
+    // 7. Notify all channel members of the applied modes
     if (!applied_modes.empty())
     {
         std::string mode_msg = ":";
@@ -219,13 +340,10 @@ void Server::handle_mode(int setter_index, const std::string& argument)
         mode_msg += parsed.channel;
         mode_msg += " ";
         mode_msg += applied_modes;
+        mode_msg += applied_params;
         mode_msg += "\r\n";
-        
-        std::vector<Client*> members = channel->get_members();
-        for (size_t i = 0; i < members.size(); i++)
-        {
-            send(members[i]->get_fd(), mode_msg.c_str(), mode_msg.length(), 0);
-        }
+
+        // broadcast to all members in _users (consistent with JOIN)
+        channel->broadcast(mode_msg, NULL);
     }
 }
-
