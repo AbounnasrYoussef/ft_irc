@@ -1,3 +1,8 @@
 {
-  "C_Cpp_Runner.msvcBatchPath": ""
+  "C_Cpp_Runner.msvcBatchPath": "",
+  "files.associations": {
+    "iosfwd": "cpp",
+    "__functional_03": "cpp",
+    "functional": "cpp"
+  }
 }
