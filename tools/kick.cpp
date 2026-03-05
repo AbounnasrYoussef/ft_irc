@@ -9,7 +9,6 @@ ParsedKick parse_kick_arguments(const std::string &argument)
     result.valid = false;
     result.reason = "";
 
-    // Extract optional reason after ':'
     size_t colon_pos = argument.find(':');
     std::string params;
 
@@ -25,7 +24,6 @@ ParsedKick parse_kick_arguments(const std::string &argument)
 
     trim(params);
 
-    // Split into channel and target nick
     size_t space_pos = params.find(' ');
 
     if (space_pos == std::string::npos)
@@ -105,8 +103,7 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
         return;
     }
 
-    // 3. Kicker must be in the channel
-    //    Use hasUser() — consistent with JOIN which uses addUser()/_users
+    // 3. Kicker must be in the channel (_users, set by addUser in JOIN)
     if (!channel->hasUser(kicker))
     {
         std::string error = ":server 442 ";
@@ -118,7 +115,7 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
         return;
     }
 
-    // 4. Kicker must be operator
+    // 4. Kicker must be operator (_operators, set by add_operator in JOIN)
     if (!channel->is_operator(kicker))
     {
         std::string error = ":server 482 ";
@@ -145,18 +142,17 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
         return;
     }
 
-    // 6. Format and send KICK message to ALL members including the target
-    //    broadcast(msg, NULL) sends to everyone in _users (no exclusion)
+    // 6. Send KICK message to ALL members including the target before removing
     std::string kick_msg = format_kick(kicker, parsed.channel,
                                        parsed.target_nick, parsed.reason);
     channel->broadcast(kick_msg, NULL);
 
-    // 7. Remove target from _members and _operators (remove_member covers both)
+    // 7. Remove target from _members and _operators
     channel->remove_member(target);
     channel->remove_operator(target);
 
-    // 8. Clean up empty channel
-    //    getuserList() iterates _users — if empty the channel has no members
-    if (channel->getuserList().empty())
+    // 8. Delete channel if now empty (_members is synced via add_member in JOIN)
+    if (channel->is_empty())
         this->delete_channel(channel);
+
 }
