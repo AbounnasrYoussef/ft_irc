@@ -5,77 +5,50 @@
 
 void Server::handel_Invite(std::string &command, std::string &argument, int index)
 {
-    (void)command;
-
     std::string nickname;
-    std::string channel_name;
-
-    if (!split(argument, ' ', nickname, channel_name) || nickname.empty() || channel_name.empty())
+    std::string channel;
+    if (split(argument, ' ', nickname, channel))
     {
-        sendError(this->clients[index]->get_fd(),
-                  ":server 461 " + clients[index]->getNickname() +
-                  " INVITE :Not enough parameters\r\n");
-        return;
+        if (nickname.empty() || channel.empty())
+        {
+            sendError(this->clients[index]->get_fd(), "461 " + clients[index]->getNickname() + " " + channel + " :Not enough parameters\r\n");
+            return;
+        }
+        if (!this->findChannel(channel))
+        {
+            sendError(this->clients[index]->get_fd(), "403 " + channel + " :No such channel\r\n");
+            return;
+        }
+        if (!this->_channels[channel]->hasUser(clients[index]))
+        {
+            sendError(this->clients[index]->get_fd(), "442 " + clients[index]->getNickname() + " " + channel + " :You're not on that channel\r\n");
+            return;
+        }
+        if (_channels[channel]->hasUser(this->findClient(nickname)))
+        {
+            sendError(this->clients[index]->get_fd(), "443 " + clients[index]->getNickname() + " " + channel + "  :is already on channel\r\n");
+            return;
+        }
+        Client *chan = this->findClient(nickname);
+        if (!chan)
+        {
+            sendError(this->clients[index]->get_fd(), "401 " + nickname + " :No such nick/channel\r\n");
+            return;
+        }
+        if (_channels[channel]->hasUser(chan))
+        {
+            sendError(this->clients[index]->get_fd(), "443 " + channel + " :is already on channel\r\n");
+            return;
+        }
+        if (this->_channels[channel]->is_invite_only() && !this->_channels[channel]->is_operator(this->clients[index]))
+        {
+            sendError(this->clients[index]->get_fd(), "482 " + channel + " :You're not channel operator\r\n");
+            return;
+        }
+        _channels[channel]->addUserInvite(chan);
+        std::string reply = ":" + clients[index]->get_prefix() + " INVITE " + nickname + " :" + channel + "\r\n";
+        send(chan->get_fd(), reply.c_str(), reply.size(), 0);
+        std::string confirm = ":server 341 " + clients[index]->getNickname() + " " + nickname + " " + channel + "\r\n";
+        send(clients[index]->get_fd(), confirm.c_str(), confirm.size(), 0);
     }
-
-    // Channel existe ?
-    if (!this->findChannel(channel_name))
-    {
-        sendError(this->clients[index]->get_fd(),
-                  ":server 403 " + clients[index]->getNickname() +
-                  " " + channel_name + " :No such channel\r\n");
-        return;
-    }
-
-    Channel *chan = this->_channels[channel_name];
-
-    // L'invitant est-il dans le channel ?
-    if (!chan->has_member(clients[index]))
-    {
-        sendError(this->clients[index]->get_fd(),
-                  ":server 442 " + clients[index]->getNickname() +
-                  " " + channel_name + " :You're not on that channel\r\n");
-        return;
-    }
-
-    // Si mode +i, seul un opérateur peut inviter
-    if (chan->is_invite_only() && !chan->is_operator(this->clients[index]))
-    {
-        sendError(this->clients[index]->get_fd(),
-                  ":server 482 " + clients[index]->getNickname() +
-                  " " + channel_name + " :You're not channel operator\r\n");
-        return;
-    }
-
-    // ✅ CORRIGÉ : utilise findClient qui parcourt le vecteur clients
-    Client *target = this->findClient(nickname);
-    if (!target)
-    {
-        sendError(this->clients[index]->get_fd(),
-                  ":server 401 " + clients[index]->getNickname() +
-                  " " + nickname + " :No such nick/channel\r\n");
-        return;
-    }
-
-    // Déjà dans le channel ?
-    if (chan->has_member(target))
-    {
-        sendError(this->clients[index]->get_fd(),
-                  ":server 443 " + clients[index]->getNickname() +
-                  " " + nickname + " " + channel_name + " :is already on channel\r\n");
-        return;
-    }
-
-    // Ajouter à la liste des invités
-    chan->addUserInvite(target);
-
-    // Notifier la cible
-    std::string invite_msg = ":" + clients[index]->get_prefix() +
-                             " INVITE " + nickname + " :" + channel_name + "\r\n";
-    send(target->get_fd(), invite_msg.c_str(), invite_msg.size(), 0);
-
-    // Confirmer à l'invitant
-    std::string confirm = ":server 341 " + clients[index]->getNickname() +
-                          " " + nickname + " " + channel_name + "\r\n";
-    send(clients[index]->get_fd(), confirm.c_str(), confirm.size(), 0);
 }
