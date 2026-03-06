@@ -120,21 +120,21 @@ void Server::setupSocket()
 	serverEntry.revents = 0;
 	this->_fds.push_back(serverEntry);
 	this->clients.push_back(NULL); // placeholder so indices align (clients[0] = server slot)
-	// 4. Initialize pollfd structure — server entry at index 0
-	// this->_fds[0].fd = this->server_Fd;
-	// this->_fds[0].events = POLLIN;
-	// this->_fds[0].revents = 0;
-	// for (int i = 1; i < MAX_CLIENTS + 1; i++) {
-	// 	this->_fds[i].fd = -1;
-	// 	this->_fds[i].events = 0;
-	// 	this->_fds[i].revents = 0;
-	// }
-	struct pollfd serverEntry;
-	serverEntry.fd = this->server_Fd;
-	serverEntry.events = POLLIN;
-	serverEntry.revents = 0;
-	this->_fds.push_back(serverEntry);
-	this->clients.push_back(NULL); // placeholder so indices align (clients[0] = server slot)
+	// // 4. Initialize pollfd structure — server entry at index 0
+	// // this->_fds[0].fd = this->server_Fd;
+	// // this->_fds[0].events = POLLIN;
+	// // this->_fds[0].revents = 0;
+	// // for (int i = 1; i < MAX_CLIENTS + 1; i++) {
+	// // 	this->_fds[i].fd = -1;
+	// // 	this->_fds[i].events = 0;
+	// // 	this->_fds[i].revents = 0;
+	// // }
+	// struct pollfd serverEntry;
+	// serverEntry.fd = this->server_Fd;
+	// serverEntry.events = POLLIN;
+	// serverEntry.revents = 0;
+	// this->_fds.push_back(serverEntry);
+	// this->clients.push_back(NULL); // placeholder so indices align (clients[0] = server slot)
 }
 
 void Server::accept_NewClient()
@@ -148,12 +148,17 @@ void Server::accept_NewClient()
 		// Error accepting new client
 		return;
 	}
+	// OLD CODE - Setting client socket to non-blocking can cause issues
 	// if (fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1)
 	// {
 	// 	std::cerr << "Error: Failed to set client socket to non-blocking" << std::endl;
 	// 	close(client_fd);
 	// 	return;
 	// }
+	
+	// NEW CODE - Keep client sockets in blocking mode
+	// Only the server socket needs to be non-blocking for accept()
+	// Client sockets work better in blocking mode with poll()
 	std::string ip = getClientIP(client_addr, len);
 
 	// Add new client entry to vectors
@@ -179,14 +184,11 @@ void Server::handle_ClientData(int index)
 
 	if (this->_fds[index].revents & POLLIN)
 	{
-		int bytes = read(this->_fds[index].fd, this->buffer, 511); // Read max 511 to leave room for null terminator
-
+		// int bytes = r(this->_fds[index].fd, this->buffer, 511); // Read max 511 to leave room for null terminator
+		int bytes = recv(this->_fds[index].fd, this->buffer, 511, 0);
 		if (bytes == 0)
 		{
 			// Client disconnected
-			// removeClient(this->_fds, clients, g_num_fds, index);
-			removeClient(this->_fds, clients, index);
-			// removeClient(this->_fds, clients, g_num_fds, index);
 			removeClient(this->_fds, clients, index);
 			return;
 		}
@@ -194,11 +196,7 @@ void Server::handle_ClientData(int index)
 		if (bytes == -1)
 		{
 			// Error reading - close connection
-			write(2, "Error reading data. Closing connection.\n", 41);
-			close(this->_fds[index].fd);
-			// removeClient(this->_fds, clients, g_num_fds, index);
-			removeClient(this->_fds, clients, index);
-			// removeClient(this->_fds, clients, g_num_fds, index);
+			std::cerr << "Error reading data from client: " << strerror(errno) << std::endl;
 			removeClient(this->_fds, clients, index);
 			return;
 		}
@@ -282,9 +280,6 @@ void Server::start()
 				accept_NewClient();
 			}
 			// check for client data
-			// for (int i = 1; i < g_num_fds; i++)
-			for (int i = 1; i < (int)this->_fds.size(); i++)
-			// for (int i = 1; i < g_num_fds; i++)
 			for (int i = 1; i < (int)this->_fds.size(); i++)
 			{
 				if (this->_fds[i].revents & POLLIN)

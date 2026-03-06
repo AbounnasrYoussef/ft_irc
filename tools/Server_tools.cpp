@@ -212,13 +212,15 @@ bool Server::check_authentication(std::string command, std::string argument, int
         {
             sendError(this->clients[index]->get_fd(), "461 " + 
                 (this->clients[index]->getNickname().empty() ? "*" : this->clients[index]->getNickname()) + 
-                " USER :Not enough parameters\r\n");
-            return false;
+                " USER :Not enough parameters \r\n");
+        
+		    return false;
         }
 
         // Parse USER arguments (username + realname)
         if (!user_parsing(argument, this->clients[index]))
         {
+			std::cout << "User parsing failed for argument: [" << argument << "]\n"; // Debug line
             sendError(this->clients[index]->get_fd(), "461 " + 
                 (this->clients[index]->getNickname().empty() ? "*" : this->clients[index]->getNickname()) + 
                 " USER :Not enough parameters\r\n");
@@ -293,6 +295,7 @@ bool Server::check_authentication(std::string command, std::string argument, int
 // }
 
 // NEW CODE - Flexible order for PASS/NICK/USER (RFC 1459 compliant)
+// Also sends welcome message when PASS comes last
 void Server::processCommand(int index, std::string &message)
 {
     std::string command;
@@ -304,12 +307,35 @@ void Server::processCommand(int index, std::string &message)
 		ft_toupper(command);
         if (command == "PASS" || command == "NICK" || command == "USER")
         {
-            // NEW: Handle PASS command first if it's PASS
+            // OLD CODE - PASS didn't check if registration completes after setting password
+            // if (command == "PASS")
+            // {
+            //     if (check_passok(command, argument, index))
+            //     {
+            //         this->clients[index]->setPassOk(true);
+            //     }
+            //     else
+            //     {
+            //         message = "";
+            //     }
+            //     return;
+            // }
+            
+            // NEW CODE - Check if registration completes after PASS (handles any order)
             if (command == "PASS")
             {
                 if (check_passok(command, argument, index))
                 {
                     this->clients[index]->setPassOk(true);
+                    // Check if registration is now complete after PASS (in case NICK/USER came first)
+                    if (this->clients[index]->isRegistered() && this->clients[index]->isWelcomeSent() == false)
+                    {
+                        sendError(this->clients[index]->get_fd(), "001 " + this->clients[index]->getNickname() + 
+                            " :Welcome to the Internet Relay Network " +
+                            this->clients[index]->getNickname() + "!" +
+                            this->clients[index]->getUsername() + "@" + this->clients[index]->getIP() + "\r\n");
+                        this->clients[index]->setWelcomeSent(true);
+                    }
                 }
                 else
                 {
@@ -318,7 +344,7 @@ void Server::processCommand(int index, std::string &message)
                 return;
             }
             
-            // NEW: Handle NICK and USER - they can come in any order now
+            // Handle NICK and USER - they can come in any order now
             // We just need to ensure all three (PASS, NICK, USER) are complete for registration
             if (check_authentication(command, argument, index) == false)
             {
@@ -326,7 +352,7 @@ void Server::processCommand(int index, std::string &message)
                 return;
             }
             
-            // NEW: Check if registration is now complete and send welcome message
+            // Check if registration is now complete and send welcome message
             if (this->clients[index]->isRegistered() && this->clients[index]->isWelcomeSent() == false)
             {
                 sendError(this->clients[index]->get_fd(), "001 " + this->clients[index]->getNickname() + 
