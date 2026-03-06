@@ -1,36 +1,37 @@
 #include "../includes/Client.hpp"
+#include "../includes/Server.hpp"
 
-void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
+// void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index)
+// {
+// 	close(fds[index].fd);
+// 	delete clients[index];
+// 	clients[index] = NULL;
+// 	for (int i = index; i < num_fds - 1; i++) {
+// 		fds[i] = fds[i + 1];
+// 		clients[i] = clients[i + 1];
+// 	}
+// 	num_fds--;
+// }
+void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients, int index)
 {
-	// Close the connection
 	close(fds[index].fd);
-	
-	// Delete the Client object
 	delete clients[index];
-	clients[index] = NULL;
-	
-	// Shift both arrays
-	for (int i = index; i < num_fds - 1; i++) {
-		fds[i] = fds[i + 1];
-		clients[i] = clients[i + 1];
-	}
-	
-	// Decrease count
-	num_fds--;
+	fds.erase(fds.begin() + index);
+	clients.erase(clients.begin() + index);
 }
 
-std::string getClientIP(const sockaddr_storage &addr, socklen_t len) // i nedd learn from here this function 
+std::string getClientIP(const sockaddr_storage &addr, socklen_t len) // i nedd learn from here this function
 {
 	char host[NI_MAXHOST];
 
-	if (getnameinfo((const sockaddr*)&addr, len, host, sizeof(host), NULL, 0, NI_NUMERICHOST) == 0)
+	if (getnameinfo((const sockaddr *)&addr, len, host, sizeof(host), NULL, 0, NI_NUMERICHOST) == 0)
 	{
 		return std::string(host);
 	}
 	return std::string();
 }
 
-bool user_parsing(const std::string& argument, Client* client) // need learn for this fuction
+bool user_parsing(const std::string &argument, Client *client) // need learn for this fuction
 {
 	// 1) realname must start with ':'
 	size_t colonPos = argument.find(" :");
@@ -58,20 +59,123 @@ bool user_parsing(const std::string& argument, Client* client) // need learn for
 	return true;
 }
 
-bool split(const std::string &s, char delimiter, std::string &left, std::string &right)
+
+// bool split(std::string &s, char delimiter, std::string &left, std::string &right)
+// {
+// 	size_t pos = s.find('\n');
+// 	size_t pos_space = s.find(' ');
+// 	std::string tmp;
+
+// 	if (pos == std::string::npos)
+// 	{
+// 		if (pos_space == std::string::npos)
+// 		{
+// 			return false;
+// 		}
+// 		else
+// 		{
+// 			tmp = s;
+// 			tmp = s.substr(0, pos);
+// 			std::string copy = s.substr(pos + 1);
+// 			s = copy;
+// 			left = tmp.substr(0, pos_space);
+// 			right = tmp.substr(pos_space + 1);
+// 			s = "";
+// 			return (!left.empty() && !right.empty());
+// 		}
+// 	}
+
+// 	tmp = s;
+// 	tmp = s.substr(0, pos);
+// 	std::string copy = s.substr(pos + 1);
+// 	s = copy;
+// 	pos = tmp.find(' ');
+
+// 	if (pos == std::string::npos)
+// 		return false;
+
+// 	left = tmp.substr(0, pos);
+// 	right = tmp.substr(pos + 1);
+// 	return (!left.empty() && !right.empty());
+// }
+
+bool split(std::string &s, char delimiter, std::string &left, std::string &right)
 {
-    std::string::size_type pos = s.find(delimiter);
+    size_t pos_nl = s.find('\n'); // نبحث عن نهاية السطر أولاً
+    std::string line;
 
-    if (pos == std::string::npos)
-        return false;
+    if (pos_nl != std::string::npos)
+    {
+        line = s.substr(0, pos_nl); // نأخذ السطر حتى \n
+        s = s.substr(pos_nl + 1);    // نحذف السطر من الرسالة الأصلية
+    }
+    else
+    {
+        line = s;
+        s = ""; // لا يوجد \n — نستهلك كل الرسالة
+    }
 
-    left = s.substr(0, pos);
-    right = s.substr(pos + 1);
+    // الآن ننظف line من \r إن وجد
+    if (!line.empty() && line.back() == '\r')
+        line.pop_back();
 
-    return !left.empty() && !right.empty();
+    // الآن نبحث عن أول مسافة
+    size_t pos_space = line.find(' ');
+
+    if (pos_space == std::string::npos)
+    {
+        // لا توجد مسافة — إذًا الأمر بدون معطى
+        left = line;          // ← كامل السطر هو الأمر
+        right = "";              // ← لا يوجد معطى
+        return !left.empty(); // نرجع true طالما يوجد أمر
+    }
+    else
+    {
+        // يوجد مسافة — نقسم
+        left = line.substr(0, pos_space);
+        right = line.substr(pos_space + 1);
+        return !left.empty();
+    }
+
 }
+// bool split(std::string &s, char delimiter, std::string &left, std::string &right)
+// {
+// 	size_t pos = s.find('\n');
+// 	size_t pos_space = s.find(' ');
+// 	std::string tmp;
 
+// 	if (pos == std::string::npos)
+// 	{
+// 		if (pos_space == std::string::npos)
+// 		{
+// 			return false;
+// 		}
+// 		else
+// 		{
+// 			tmp = s;
+// 			tmp = s.substr(0, pos);
+// 			std::string copy = s.substr(pos + 1);
+// 			s = copy;
+// 			left = tmp.substr(0, pos_space);
+// 			right = tmp.substr(pos_space + 1);
+// 			s = "";
+// 			return (!left.empty() && !right.empty());
+// 		}
+// 	}
 
+// 	tmp = s;
+// 	tmp = s.substr(0, pos);
+// 	std::string copy = s.substr(pos + 1);
+// 	s = copy;
+// 	pos = tmp.find(' ');
+
+// 	if (pos == std::string::npos)
+// 		return false;
+
+// 	left = tmp.substr(0, pos);
+// 	right = tmp.substr(pos + 1);
+// 	return (!left.empty() && !right.empty());
+// }
 
 bool isalpha_string(std::string str)
 {
@@ -85,18 +189,12 @@ bool isalpha_string(std::string str)
 
 bool pars_nick(std::string _nickname)
 {
-	// Nickname must start with a letter or special character
 	if (isalpha_string(_nickname))
 		return true;
 
-	// // Check each character in the nickname
-	// for (size_t i = 1; i < _nickname.length(); ++i)
-	// {
-	// 	char c = _nickname[i];
-	// 	if (!isalnum(c) && !strchr("[]\\`_^{|}-", c))
-	// 		return true;
-	// }
-
 	return false;
 }
+
+
+
 
