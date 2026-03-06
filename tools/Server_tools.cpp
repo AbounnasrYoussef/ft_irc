@@ -363,21 +363,19 @@ void Server::processCommand(int index, std::string &message)
         //  add more commands here like JOIN, PART, PRIVMSG, etc. use cmmand and argument variables
 
         // youssef part : "kick , privmsg , mode"
-        else if (command == "PRIVMSG" || command == "KICK" || command == "MODE")
-        {
-            if (command == "PRIVMSG")
+        
+        else if (command == "PRIVMSG")
             {
                 this->handle_privmsg(index, argument);
             }
-            else if (command == "KICK")
+        else if (command == "KICK")
             {
                 this->handle_kick(index, argument);
             }
-            else if (command == "MODE")
+        else if (command == "MODE")
             {
                 handle_mode(index, argument);
             }
-        }
     }
 }
 

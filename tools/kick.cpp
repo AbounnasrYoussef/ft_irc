@@ -3,18 +3,15 @@
 #include "../includes/Channel.hpp"
 #include "../includes/Commands.hpp"
 
-ParsedKick parse_kick_arguments(const std::string& argument)
+ParsedKick parse_kick_arguments(const std::string &argument)
 {
     ParsedKick result;
     result.valid = false;
     result.reason = "";
-    
-    // 1. Chercher le ':' pour la raison
+
     size_t colon_pos = argument.find(':');
-    
     std::string params;
-    
-    // Extraire la raison si elle existe
+
     if (colon_pos != std::string::npos)
     {
         result.reason = argument.substr(colon_pos + 1);
@@ -24,41 +21,37 @@ ParsedKick parse_kick_arguments(const std::string& argument)
     {
         params = argument;
     }
-    
-    // 2. Trim les espaces
+
     trim(params);
-    
-    // 3. Split par espace pour obtenir channel et target
+
     size_t space_pos = params.find(' ');
-    
+
     if (space_pos == std::string::npos)
     {
-        // Pas assez de paramètres (il faut channel ET target)
         result.error_code = 461;
         result.error_msg = "KICK :Not enough parameters";
         return result;
     }
-    
+
     result.channel = params.substr(0, space_pos);
     result.target_nick = params.substr(space_pos + 1);
-    
+
     trim(result.channel);
     trim(result.target_nick);
-    
-    // 4. Vérifier qu'on a bien les deux
+
     if (result.channel.empty() || result.target_nick.empty())
     {
         result.error_code = 461;
         result.error_msg = "KICK :Not enough parameters";
         return result;
     }
-    
+
     result.valid = true;
     return result;
 }
-// Formater le message KICK
-std::string format_kick(Client* kicker, const std::string& channel, 
-                        const std::string& target, const std::string& reason)
+
+static std::string format_kick(Client *kicker, const std::string &channel,
+                                const std::string &target, const std::string &reason)
 {
     std::string result = ":";
     result += kicker->getNickname();
@@ -70,24 +63,24 @@ std::string format_kick(Client* kicker, const std::string& channel,
     result += channel;
     result += " ";
     result += target;
-    
+
     if (!reason.empty())
     {
         result += " :";
         result += reason;
     }
-    
+
     result += "\r\n";
     return result;
 }
 
-void Server::handle_kick(int kicker_index, const std::string& argument)
+void Server::handle_kick(int kicker_index, const std::string &argument)
 {
-    Client* kicker = this->clients[kicker_index];
-    
-    // 1. Parser les arguments
+    Client *kicker = this->clients[kicker_index];
+
+    // 1. Parse arguments
     ParsedKick parsed = parse_kick_arguments(argument);
-    
+
     if (!parsed.valid)
     {
         std::string error = ":server 461 ";
@@ -96,9 +89,9 @@ void Server::handle_kick(int kicker_index, const std::string& argument)
         sendError(kicker->get_fd(), error);
         return;
     }
-    
-    // 2. Vérifier que le channel existe
-    Channel* channel = this->get_channel(parsed.channel);
+
+    // 2. Check channel exists
+    Channel *channel = this->get_channel(parsed.channel);
     if (!channel)
     {
         std::string error = ":server 403 ";
@@ -109,9 +102,9 @@ void Server::handle_kick(int kicker_index, const std::string& argument)
         sendError(kicker->get_fd(), error);
         return;
     }
-    
-    // 3. Vérifier que kicker est membre du channel
-    if (!channel->has_member(kicker))
+
+    // 3. Kicker must be in the channel (_users, set by addUser in JOIN)
+    if (!channel->hasUser(kicker))
     {
         std::string error = ":server 442 ";
         error += kicker->getNickname();
@@ -121,8 +114,8 @@ void Server::handle_kick(int kicker_index, const std::string& argument)
         sendError(kicker->get_fd(), error);
         return;
     }
-    
-    // 4. Vérifier que kicker est opérateur
+
+    // 4. Kicker must be operator (_operators, set by add_operator in JOIN)
     if (!channel->is_operator(kicker))
     {
         std::string error = ":server 482 ";
@@ -133,10 +126,10 @@ void Server::handle_kick(int kicker_index, const std::string& argument)
         sendError(kicker->get_fd(), error);
         return;
     }
-    
-    // 5. Trouver la cible
-    Client* target = this->get_client_by_nickname(parsed.target_nick);
-    if (!target || !channel->has_member(target))
+
+    // 5. Find target and verify they are in the channel
+    Client *target = this->get_client_by_nickname(parsed.target_nick);
+    if (!target || !channel->hasUser(target))
     {
         std::string error = ":server 441 ";
         error += kicker->getNickname();
@@ -148,24 +141,18 @@ void Server::handle_kick(int kicker_index, const std::string& argument)
         sendError(kicker->get_fd(), error);
         return;
     }
-    
-    // 6. Formater le message KICK
-    std::string kick_msg = format_kick(kicker, parsed.channel, 
+
+    // 6. Send KICK message to ALL members including the target before removing
+    std::string kick_msg = format_kick(kicker, parsed.channel,
                                        parsed.target_nick, parsed.reason);
-    
-    // 7. Envoyer à TOUS les membres (y compris target)
-    std::vector<Client*> members = channel->get_members();
-    for (size_t i = 0; i < members.size(); i++)
-    {
-        send(members[i]->get_fd(), kick_msg.c_str(), kick_msg.length(), 0);
-    }
-    
-    // 8. Retirer target du channel
+    channel->broadcast(kick_msg, NULL);
+
+    // 7. Remove target from _members and _operators
     channel->remove_member(target);
-    
-    // 9. Si le channel est vide, le supprimer
+    channel->remove_operator(target);
+
+    // 8. Delete channel if now empty (_members is synced via add_member in JOIN)
     if (channel->is_empty())
-    {
         this->delete_channel(channel);
-    }
+
 }

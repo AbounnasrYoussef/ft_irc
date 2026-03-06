@@ -120,6 +120,21 @@ void Server::setupSocket()
 	serverEntry.revents = 0;
 	this->_fds.push_back(serverEntry);
 	this->clients.push_back(NULL); // placeholder so indices align (clients[0] = server slot)
+	// 4. Initialize pollfd structure — server entry at index 0
+	// this->_fds[0].fd = this->server_Fd;
+	// this->_fds[0].events = POLLIN;
+	// this->_fds[0].revents = 0;
+	// for (int i = 1; i < MAX_CLIENTS + 1; i++) {
+	// 	this->_fds[i].fd = -1;
+	// 	this->_fds[i].events = 0;
+	// 	this->_fds[i].revents = 0;
+	// }
+	struct pollfd serverEntry;
+	serverEntry.fd = this->server_Fd;
+	serverEntry.events = POLLIN;
+	serverEntry.revents = 0;
+	this->_fds.push_back(serverEntry);
+	this->clients.push_back(NULL); // placeholder so indices align (clients[0] = server slot)
 }
 
 void Server::accept_NewClient()
@@ -171,6 +186,8 @@ void Server::handle_ClientData(int index)
 			// Client disconnected
 			// removeClient(this->_fds, clients, g_num_fds, index);
 			removeClient(this->_fds, clients, index);
+			// removeClient(this->_fds, clients, g_num_fds, index);
+			removeClient(this->_fds, clients, index);
 			return;
 		}
 
@@ -179,6 +196,8 @@ void Server::handle_ClientData(int index)
 			// Error reading - close connection
 			write(2, "Error reading data. Closing connection.\n", 41);
 			close(this->_fds[index].fd);
+			// removeClient(this->_fds, clients, g_num_fds, index);
+			removeClient(this->_fds, clients, index);
 			// removeClient(this->_fds, clients, g_num_fds, index);
 			removeClient(this->_fds, clients, index);
 			return;
@@ -263,6 +282,8 @@ void Server::start()
 				accept_NewClient();
 			}
 			// check for client data
+			// for (int i = 1; i < g_num_fds; i++)
+			for (int i = 1; i < (int)this->_fds.size(); i++)
 			// for (int i = 1; i < g_num_fds; i++)
 			for (int i = 1; i < (int)this->_fds.size(); i++)
 			{

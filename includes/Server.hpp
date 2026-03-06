@@ -38,12 +38,13 @@ class Server {
 		int port;                        // Port number
 		std::string password;            // Server password
 		char buffer[512];       // Buffer for incoming data
-		std::map<std::string, Channel *> _channels;
+		// std::map<std::string, Channel *> _channels;
 		std::map<int, Client *> _clients;
 		// struct pollfd _fds[MAX_CLIENTS];  // Poll array
 		std::vector<struct pollfd> _fds;   // Poll vector
 		// int _numFds;                      // Number of active fds
-	
+		std::map<std::string, Channel*> _channels;
+
 	public:
 		Server();
 		Server(const Server& other);
