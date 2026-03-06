@@ -59,7 +59,7 @@ class Server {
 	void Quit();
 	// Core server functions
 	void start();					   // Main server loop
-	void setupSocket();				   // socket() + bind() + listen()
+	bool setupSocket();				   // socket() + bind() + listen()
 	void accept_NewClient();		   // accept() new connection
 	void handle_ClientData(int index); // Process client messages
 	// void removeClient(int index);     // Disconnect and cleanup
@@ -87,6 +87,7 @@ class Server {
 	void delete_channel(Channel *channel);
 	void handle_kick(int kicker_index, const std::string &argument);
 	void handle_mode(int setter_index, const std::string &argument);
+	void handle_quit(int index, std::string &argument);
 
 	// Otmane part join topic invet
 	void handel_Join(std::string &command, std::string &argument, int index);
