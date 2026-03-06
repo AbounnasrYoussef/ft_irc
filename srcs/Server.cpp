@@ -93,38 +93,38 @@ void Server::setupSocket()
 
 void Server::accept_NewClient()
 {
-	sockaddr_storage client_addr;
-	socklen_t len = sizeof(client_addr);
+    sockaddr_storage client_addr;
+    socklen_t len = sizeof(client_addr);
 
-	int client_fd = accept(this->server_Fd, (sockaddr *)&client_addr, &len);
-	if (client_fd == -1)
-	{
-		// Error accepting new client
-		return;
-	}
-	// if (fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1)
-	// {
-	// 	std::cerr << "Error: Failed to set client socket to non-blocking" << std::endl;
-	// 	close(client_fd);
-	// 	return;
-	// }
-	std::string ip = getClientIP(client_addr, len);
+    int client_fd = accept(this->server_Fd, (sockaddr *)&client_addr, &len);
+    if (client_fd == -1)
+    {
+        // Error accepting new client
+        return;
+    }
+    // if (fcntl(client_fd, F_SETFL, O_NONBLOCK) == -1)
+    // {
+    //     std::cerr << "Error: Failed to set client socket to non-blocking" << std::endl;
+    //     close(client_fd);
+    //     return;
+    // }
+    std::string ip = getClientIP(client_addr, len);
 
-	// Add new client entry to vectors
-	// this->_fds[g_num_fds].fd = client_fd;
-	// this->_fds[g_num_fds].events = POLLIN;
-	// this->_fds[g_num_fds].revents = 0;
-	// this->clients[g_num_fds] = new Client(client_fd);
-	// this->clients[g_num_fds]->setIP(ip);
-	// g_num_fds++;
-	struct pollfd clientEntry;
-	clientEntry.fd = client_fd;
-	clientEntry.events = POLLIN;
-	clientEntry.revents = 0;
-	this->_fds.push_back(clientEntry);
-	Client* newClient = new Client(client_fd);
-	newClient->setIP(ip);
-	this->clients.push_back(newClient);
+    // Add new client entry to vectors
+    // this->_fds[g_num_fds].fd = client_fd;
+    // this->_fds[g_num_fds].events = POLLIN;
+    // this->_fds[g_num_fds].revents = 0;
+    // this->clients[g_num_fds] = new Client(client_fd);
+    // this->clients[g_num_fds]->setIP(ip);
+    // g_num_fds++;
+    struct pollfd clientEntry;
+    clientEntry.fd = client_fd;
+    clientEntry.events = POLLIN;
+    clientEntry.revents = 0;
+    this->_fds.push_back(clientEntry);
+    Client* newClient = new Client(client_fd);
+    newClient->setIP(ip);
+    this->clients.push_back(newClient);
 }
 
 void Server::handle_ClientData(int index)
