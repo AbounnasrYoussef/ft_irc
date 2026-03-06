@@ -21,8 +21,40 @@
 // 	ser.start();
 // 	return 0;
 // }
+bool g_running = true; 
 
+#include <signal.h>
 // NEW CODE - Proper validation of port and password
+void f()
+{
+    system("leaks ircserv");
+}
+
+
+
+
+extern "C" void server_signal(int sig)
+{
+    if (sig == SIGINT || sig == SIGTERM)
+        g_running = 0;
+		// exit(0);
+	std::cout << "\nShutting down server..." << std::endl;
+}
+
+void setup_server_signals()
+{
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+
+    sa.sa_handler = server_signal;
+    sigemptyset(&sa.sa_mask);
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+
+    signal(SIGPIPE, SIG_IGN);
+}
+
 int main(int ac, char **av)
 {
 	if (ac != 3)
@@ -30,7 +62,7 @@ int main(int ac, char **av)
 		std::cerr << "Usage: " << av[0] << " <PORT> <PASSWORD>" << std::endl;
 		return 1;
 	}
-	
+	setup_server_signals();
 	// Validate port number
 	char *endptr;
 	long port = std::strtol(av[1], &endptr, 10);
@@ -56,14 +88,10 @@ int main(int ac, char **av)
 		return 1;
 	}
 	
-	if (password.length() < 3)
-	{
-		std::cerr << "Warning: Password is very short (recommended: 8+ characters)" << std::endl;
-	}
-	
 	// Create and start server
 	Server ser(port, password);
 	ser.start();
+	atexit(f);
 
 	return 0;
 }

@@ -31,7 +31,8 @@ class Channel;
 void ft_toupper(std::string &str);
 void sendError(int fd, const std::string &msg);
 bool isalpha_string(std::string str);
-
+// volatile sig_atomic_t g_running = 1;
+extern bool g_running ;
 class Server {
 	private:
 		int server_Fd;                    // Server socket fd
@@ -46,9 +47,9 @@ class Server {
 		std::map<std::string, Channel*> _channels;
 
 	public:
-		Server();
-		Server(const Server& other);
-		Server& operator=(const Server& other);
+		Server(){};
+		Server(const Server& other){(void)other;};
+		Server& operator=(const Server& other){(void)other;return *this;};
 		Server(int port, std::string password);
 		~Server();
 	

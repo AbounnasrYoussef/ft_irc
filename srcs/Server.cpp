@@ -19,28 +19,28 @@ class Client;
 Server::~Server()
 {
 	// Clean up all clients
-	for (size_t i = 0; i < clients.size(); ++i)
-	{
-		if (clients[i])
-		{
-			close(clients[i]->get_fd());
-			delete clients[i];
-			clients[i] = NULL;
-		}
-	}
-	clients.clear();
+	// for (size_t i = 0; i < clients.size(); ++i)
+	// {
+	// 	if (clients[i])
+	// 	{
+	// 		close(clients[i]->get_fd());
+	// 		delete clients[i];
+	// 		clients[i] = NULL;
+	// 	}
+	// }
+	// clients.clear();
 	
-	// Clean up all channels
-	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); 
-	     it != _channels.end(); ++it)
-	{
-		delete it->second;
-	}
-	_channels.clear();
+	// // Clean up all channels
+	// for (std::map<std::string, Channel*>::iterator it = _channels.begin(); 
+	//      it != _channels.end(); ++it)
+	// {
+	// 	delete it->second;
+	// }
+	// _channels.clear();
 	
-	// Close server socket
-	if (this->server_Fd != -1)
-		close(this->server_Fd);
+	// // Close server socket
+	// if (this->server_Fd != -1)
+	// 	close(this->server_Fd);
 }
 
 Server::Server(int port, std::string password)
@@ -126,6 +126,7 @@ void Server::accept_NewClient()
 	this->_fds.push_back(clientEntry);
 	Client* newClient = new Client(client_fd);
 
+
 	newClient->setIP(ip);
 	this->clients.push_back(newClient);
 }
@@ -188,7 +189,7 @@ void Server::start()
 {
 	if (!setupSocket())
 		return;
-	while (true)
+	while (g_running)
 	{	
 		// NEW CODE - Handle EINTR (interrupted system call) properly
 		int ret = poll(&this->_fds[0], this->_fds.size(), -1);

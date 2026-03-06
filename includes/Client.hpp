@@ -15,8 +15,6 @@
 #include <netdb.h>
 class Channel;
 class Client;
-// void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
-void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients, int index);
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
 // bool massage_complet(std::string buffer);
 bool pars_nick(std::string _nickname);
@@ -79,7 +77,8 @@ class Client {
 		// const std::set<Channel*> getChannels() const;
 		
 };
-void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
+void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients, int index);
+
 bool user_parsing(const std::string& argument, Client* client);
 
 #endif

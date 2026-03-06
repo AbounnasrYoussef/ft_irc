@@ -373,55 +373,14 @@ int Server::getServerFd()
 // NEW CODE - Handle individual client QUIT command
 void Server::handle_quit(int index, std::string &argument)
 {
-	if (!this->clients[index])
-		return;
-	
-	// Extract quit message (optional)
-	std::string quit_msg = argument.empty() ? "Client quit" : argument;
-	
-	// Remove leading ':' if present
-	if (!quit_msg.empty() && quit_msg[0] == ':')
-		quit_msg = quit_msg.substr(1);
-	
-	std::string nickname = this->clients[index]->getNickname();
-	std::string username = this->clients[index]->getUsername();
-	std::string ip = this->clients[index]->getIP();
-	
-	// Build QUIT message to broadcast: :nick!user@host QUIT :reason
-	std::string quit_broadcast = ":" + nickname + "!" + username + "@" + ip + 
-								" QUIT :" + quit_msg + "\r\n";
-	
-	// Remove client from all channels and notify other users
-	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); 
-		it != _channels.end(); ++it)
+	if (!this->clients[index]->isRegistered())
 	{
-		Channel* channel = it->second;
-		if (channel && channel->has_member(this->clients[index]))
-		{
-			// Broadcast QUIT message to all users in this channel (except quitting user)
-			channel->broadcast(quit_broadcast, this->clients[index]);
-			
-			// Remove from members and operators
-			channel->remove_member(this->clients[index]);
-			if (channel->is_operator(this->clients[index]))
-				channel->remove_operator(this->clients[index]);
-			
-			// Delete empty channels
-			if (channel->is_empty())
-			{
-				delete channel;
-				_channels.erase(it);
-				// Reset iterator since we modified the map
-				it = _channels.begin();
-				if (it == _channels.end())
-					break;
-			}
-		}
+		sendError(this->clients[index]->get_fd(), "451 " + 
+			(this->clients[index]->getNickname().empty() ? "*" : this->clients[index]->getNickname()) + 
+			" :You have not registered\r\n");
+		return;
 	}
 	
-	// Send confirmation to the quitting client
-	std::string error_msg = "ERROR :Closing connection (" + quit_msg + ")\r\n";
-	send(this->clients[index]->get_fd(), error_msg.c_str(), error_msg.length(), 0);
 	
 	// Remove client from server (this will close fd and delete client)
 	removeClient(this->_fds, clients, index);
