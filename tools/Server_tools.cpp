@@ -132,7 +132,7 @@ void Server::processCommand(int index, std::string &message)
     if (split(message, ' ', command, argument))
     {
         // Handle PASS, NICK, USER for registration
-		ft_toupper(command);
+        ft_toupper(command);
         if (command == "PASS" || command == "NICK" || command == "USER")
         {
 
@@ -166,8 +166,8 @@ void Server::processCommand(int index, std::string &message)
                 // 	"user is > [" + clients[index]->getUsername() + "]\n"+ "\r\n");
                 // sendError(this->clients[index]->get_fd(), "server 001 " + this->clients[index]->getNickname() + " : Welcome to the Internet Relay Network\r\n");
                 sendError(this->clients[index]->get_fd(), "001 RPL_WELCOME :Welcome to the Internet Relay Network " +
-                                                              this->clients[index]->getNickname() + "!" +
-                                                              this->clients[index]->getUsername() + "@" + this->clients[index]->getIP() + "\r\n");
+                                                            this->clients[index]->getNickname() + "!" +
+                                                            this->clients[index]->getUsername() + "@" + this->clients[index]->getIP() + "\r\n");
                 this->clients[index]->setWelcomeSent(true);
             }
             return;
@@ -221,50 +221,50 @@ void sendError(int fd, const std::string &msg)
 
 bool Server::isNicknameTaken(std::string nickname, int excludeIndex)
 {
-	// for (int i = 1; i < g_num_fds; i++)
-	for (int i = 1; i < (int)this->_fds.size(); i++)
-	{
-		if (this->clients[i] && i != excludeIndex && this->clients[i]->getNickname() == nickname) 
-		{
-			return true;  // Found a match in another client!
-		}
-	}
-	return false;  // Not taken
+    // for (int i = 1; i < g_num_fds; i++)
+    for (int i = 1; i < (int)this->_fds.size(); i++)
+    {
+        if (this->clients[i] && i != excludeIndex && this->clients[i]->getNickname() == nickname) 
+        {
+            return true;  // Found a match in another client!
+        }
+    }
+    return false;  // Not taken
 }
 
 int Server::getServerFd()
 {
-	return this->server_Fd;
+    return this->server_Fd;
 }
 
 void Server::Quit()
 {
-	// Close all client connections
-	// for (int i = 1; i < g_num_fds; ++i)
-	for (int i = 1; i < (int)this->clients.size(); ++i)
-	{
-		if (this->clients[i])
-		{
-			close(this->clients[i]->get_fd());
-			delete this->clients[i];
-			this->clients[i] = NULL;
-		}
-	}
-	// Close server socket
-	// close(this->server_Fd);
-	// exit(0);
-	
+    // Close all client connections
+    // for (int i = 1; i < g_num_fds; ++i)
+    for (int i = 1; i < (int)this->clients.size(); ++i)
+    {
+        if (this->clients[i])
+        {
+            close(this->clients[i]->get_fd());
+            delete this->clients[i];
+            this->clients[i] = NULL;
+        }
+    }
+    // Close server socket
+    // close(this->server_Fd);
+    // exit(0);
+    
 }
 
 void ft_toupper(std::string &str)
 {
-	size_t i = 0;
-	size_t len = str.length();
-	
-	while (i < len)
-	{
-		str[i] = std::toupper(str[i]);
-		i++;
-	}
+    size_t i = 0;
+    size_t len = str.length();
+    
+    while (i < len)
+    {
+        str[i] = std::toupper(str[i]);
+        i++;
+    }
 
 }
