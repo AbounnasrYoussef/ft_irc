@@ -15,8 +15,6 @@
 #include <netdb.h>
 class Channel;
 class Client;
-// void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
-void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients, int index);
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
 // bool massage_complet(std::string buffer);
 bool pars_nick(std::string _nickname);
@@ -33,6 +31,7 @@ class Client {
 		std::set<Channel*> _channels;           // IP of client 
 		bool _passOk;               // Password authenticated?
 		bool _welcomeSent; 		// Welcome message sent?
+		bool _userSet;              // USER command already sent? (NEW - prevents duplicate USER)
 		// bool _registered;           // Fully registered? (PASS + NICK + USER) // no need
 		
 	public:
@@ -49,6 +48,7 @@ class Client {
 		bool isPassOk() const;
 		std::string getBuffer() const;
 		std::string getIP() const;
+		bool isUserSet() const; // NEW - check if USER was already sent
 		
 		// Setters
 		void setNickname(std::string nick);
@@ -58,6 +58,7 @@ class Client {
 		void setPassOk(bool ok);
 		bool isWelcomeSent() const;
 		void setWelcomeSent(bool sent);
+		void setUserSet(bool set); // NEW - mark USER as sent
 		// void setRegistered(bool reg); no need
 		// Buffer management
 		void appendBuffer(std::string const data);
@@ -76,7 +77,8 @@ class Client {
 		// const std::set<Channel*> getChannels() const;
 		
 };
-void removeClient(struct pollfd fds[], Client* clients[], int& num_fds, int index);
+void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients, int index);
+
 bool user_parsing(const std::string& argument, Client* client);
 
 #endif
