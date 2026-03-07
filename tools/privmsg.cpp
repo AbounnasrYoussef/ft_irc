@@ -6,6 +6,7 @@
 std::string format_privmsg(Client *sender, const std::string &target, const std::string &message)
 {
     std::string result = ":";
+	result += "~";
     result += sender->getNickname();
     result += "!";
     result += sender->getUsername();
