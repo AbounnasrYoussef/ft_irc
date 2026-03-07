@@ -47,17 +47,17 @@ void Server::handel_Join(std::string &command, std::string &argument, int index)
             }
             if (chanName[0] != '#' && chanName[0] != '&')
             {
-                sendError(this->clients[index]->get_fd(), "476  ERR_YOUWILLBEBANNED" + chanName + " Bad Channel Mask\r\n");
+                sendError(this->clients[index]->get_fd(), "476  ERR_BADCHANMASK" + chanName + " Bad Channel Mask\r\n");
                 continue;
             }
             if (chanName.size() < 2 || chanName.size() > 50)
             {
-                sendError(this->clients[index]->get_fd(), "476  ERR_YOUWILLBEBANNED" + this->clients[index]->getNickname() + " " + chanName + " Bad Channel Mask\r\n");
+                sendError(this->clients[index]->get_fd(), "476  ERR_BADCHANMASK" + this->clients[index]->getNickname() + " " + chanName + " Bad Channel Mask\r\n");
                 continue;
             }
             if (chanName.find(' ') != std::string::npos || chanName.find(',') != std::string::npos || chanName.find('\7') != std::string::npos)
             {
-                sendError(this->clients[index]->get_fd(), "476  ERR_YOUWILLBEBANNED" + chanName + " Bad Channel Mask\r\n");
+                sendError(this->clients[index]->get_fd(), "476  ERR_BADCHANMASK" + chanName + " Bad Channel Mask\r\n");
                 continue;
             }
 
@@ -94,7 +94,7 @@ void Server::handel_Join(std::string &command, std::string &argument, int index)
             {
                 if (i >= all_key.size() || !channel->checkAkey(all_key[i]))
                 {
-                    sendError(this->clients[index]->get_fd(), ":server 475 " + this->clients[index]->getNickname() + " " + chanName + " :Cannot join channel (+k)\r\n");
+                    sendError(this->clients[index]->get_fd(), ":server 475 ERR_BADCHANNELKEY" + this->clients[index]->getNickname() + " " + chanName + " :Cannot join channel (+k)\r\n");
                     continue;
                 }
             }
@@ -111,7 +111,7 @@ void Server::handel_Join(std::string &command, std::string &argument, int index)
                 int current = (int)channel->get_members().size();
                 if (current >= channel->get_user_limit())
                 {
-                    sendError(this->clients[index]->get_fd(), ":server 471 " + this->clients[index]->getNickname() + " " + chanName + " :Cannot join channel (+l)\r\n");
+                    sendError(this->clients[index]->get_fd(), ":server 471 ERR_CHANNELISFULL" + this->clients[index]->getNickname() + " " + chanName + " :Cannot join channel (+l)\r\n");
                     continue;
                 }
             }

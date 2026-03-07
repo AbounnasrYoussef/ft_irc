@@ -43,7 +43,6 @@ void Channel::addUser(Client *client)
 
 bool Channel::hasUser(Client *Client) const
 {
-
     return (_users.find(Client) != _users.end());
 }
 void Channel::broadcast(const std::string &message, Client *exclude)
@@ -51,7 +50,7 @@ void Channel::broadcast(const std::string &message, Client *exclude)
     for (std::set <Client*>::const_iterator it = _users.begin();it !=_users.end();++it)
     {
 		Client *client = *it;
-        if (client || client == exclude)
+        if (!client || client == exclude)
         {
             continue;
         };

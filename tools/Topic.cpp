@@ -7,7 +7,7 @@ void Server::handel_Topic(std::string &command, std::string &argument, int index
 {
     if (argument.empty())
     {
-        sendError(this->clients[index]->get_fd(), "461 " + clients[index]->getNickname() + " " + command + " Not enough parameters\r\n");
+        sendError(this->clients[index]->get_fd(), "461 ERR_NEEDMOREPARAMS" + clients[index]->getNickname() + " " + command + " Not enough parameters\r\n");
         return;
     }
     std::string channel;
@@ -17,24 +17,24 @@ void Server::handel_Topic(std::string &command, std::string &argument, int index
 
     if (!this->findChannel(channel))
     {
-        sendError(this->clients[index]->get_fd(), "403 " + clients[index]->getNickname() + " " + channel + " :No such channel\r\n");
+        sendError(this->clients[index]->get_fd(), "403 ERR_NOSUCHCHANNEL" + clients[index]->getNickname() + " " + channel + " :No such channel\r\n");
         return;
     }
     if (!this->_channels[channel]->hasUser(clients[index]))
     {
-        sendError(this->clients[index]->get_fd(), "442 " + clients[index]->getNickname() + " " + channel + " :You're not on that channel\r\n");
+        sendError(this->clients[index]->get_fd(), "442 ERR_NOTONCHANNEL" + clients[index]->getNickname() + " " + channel + " :You're not on that channel\r\n");
         return;
     }
     if (!has_topeck || opject.empty())
     {
         if (this->_channels[channel]->get_topic().empty())
         {
-            std::string reply = ":server 331 " + this->clients[index]->getNickname() + " " + channel + " :No topic is set\r\n";
+            std::string reply = ":server 331 RPL_NOTOPIC" + this->clients[index]->getNickname() + " " + channel + " :No topic is set\r\n";
             send(this->clients[index]->get_fd(), reply.c_str(), reply.size(), 0);
         }
         else
         {
-            std::string reply = ":server 332 " + this->clients[index]->getNickname() + " " + channel + " :" + this->_channels[channel]->get_topic() + "\r\n";
+            std::string reply = ":server 332 RPL_TOPIC" + this->clients[index]->getNickname() + " " + channel + " :" + this->_channels[channel]->get_topic() + "\r\n";
             send(this->clients[index]->get_fd(), reply.c_str(), reply.size(), 0);
         }
         return;
@@ -42,7 +42,7 @@ void Server::handel_Topic(std::string &command, std::string &argument, int index
 
     if (this->_channels[channel]->is_topic_protected() && !this->_channels[channel]->is_operator(this->clients[index]))
     {
-        sendError(this->clients[index]->get_fd(), "482 " + this->clients[index]->getNickname() + " " + channel + " :You're not channel operator\r\n");
+        sendError(this->clients[index]->get_fd(), "482 ERR_CHANOPRIVSNEEDED" + this->clients[index]->getNickname() + " " + channel + " :You're not channel operator\r\n");
         return;
     }
     std::string new_topec = opject;
