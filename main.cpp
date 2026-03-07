@@ -91,7 +91,7 @@ int main(int ac, char **av)
 	// Create and start server
 	Server ser(port, password);
 	ser.start();
-	atexit(f);
+	// atexit(f);
 
 	return 0;
 }
