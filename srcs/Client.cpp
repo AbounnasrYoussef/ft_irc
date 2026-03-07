@@ -2,6 +2,18 @@
 
 class channel;
 
+// OLD CODE - Missing _userSet initialization
+// Client::Client(int fd) : _fd(fd)
+// {
+// 	_nickname = "";
+// 	_username = "";
+// 	_realname = "";
+// 	_buffer = "";
+// 	_passOk = false;
+// 	_welcomeSent = false;
+// }
+
+// NEW CODE - Added _userSet initialization
 Client::Client(int fd) : _fd(fd)
 {
 	_nickname = "";
@@ -10,6 +22,7 @@ Client::Client(int fd) : _fd(fd)
 	_buffer = "";
 	_passOk = false;
 	_welcomeSent = false;
+	_userSet = false; // NEW
 }
 
 Client::~Client()
@@ -61,6 +74,12 @@ bool Client::isPassOk() const
 	return _passOk;
 }
 
+// NEW - Getter for _userSet flag
+bool Client::isUserSet() const
+{
+	return _userSet;
+}
+
 std::string Client::getBuffer() const
 {
 	return _buffer;
@@ -91,6 +110,12 @@ void Client::setRealname(std::string real)
 void Client::setPassOk(bool ok)
 {
 	_passOk = ok;
+}
+
+// NEW - Setter for _userSet flag
+void Client::setUserSet(bool set)
+{
+	_userSet = set;
 }
 
 void Client::setIP(std::string ip)
