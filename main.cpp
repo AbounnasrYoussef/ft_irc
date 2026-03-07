@@ -40,7 +40,7 @@ extern "C" void server_signal(int sig)
 		// exit(0);
 	std::cout << "\nShutting down server..." << std::endl;
 }
-
+#include <cstring>
 void setup_server_signals()
 {
     struct sigaction sa;
