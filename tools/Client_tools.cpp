@@ -18,6 +18,7 @@ void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients
 	delete clients[index];
 	fds.erase(fds.begin() + index);
 	clients.erase(clients.begin() + index);
+	throw "Client removed"; // Throw an exception to break out of the calling loop
 }
 
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len) // i nedd learn from here this function
@@ -31,6 +32,26 @@ std::string getClientIP(const sockaddr_storage &addr, socklen_t len) // i nedd l
 	return std::string();
 }
 
+// OLD CODE - Missing empty username validation
+// bool user_parsing(const std::string &argument, Client *client)
+// {
+// 	size_t colonPos = argument.find(" :");
+// 	if (colonPos == std::string::npos)
+// 		return false;
+// 	std::string before = argument.substr(0, colonPos);
+// 	std::string realname = argument.substr(colonPos + 2);
+// 	if (realname.empty())
+// 		return false;
+// 	std::istringstream iss(before);
+// 	std::string username, hostname, servername;
+// 	if (!(iss >> username >> hostname >> servername))
+// 		return false;
+// 	client->setUsername(username);
+// 	client->setRealname(realname);
+// 	return true;
+// }
+
+// NEW CODE - Added empty username validation
 bool user_parsing(const std::string &argument, Client *client) // need learn for this fuction
 {
 	// 1) realname must start with ':'
@@ -52,7 +73,11 @@ bool user_parsing(const std::string &argument, Client *client) // need learn for
 	if (!(iss >> username >> hostname >> servername))
 		return false;
 
-	// 4) store values
+	// 4) Validate username is not empty (NEW)
+	if (username.empty())
+		return false;
+
+	// 5) store values
 	client->setUsername(username);
 	client->setRealname(realname);
 
@@ -187,12 +212,42 @@ bool isalpha_string(std::string str)
 	return true;
 }
 
+// OLD CODE - Too restrictive, only accepts alphabetic characters
+// bool pars_nick(std::string _nickname)
+// {
+// 	if (isalpha_string(_nickname))
+// 		return true;
+// 	return false;
+// }
+
+// NEW CODE - RFC 1459 compliant nickname validation
+// RFC 1459: <nick> ::= <letter> { <letter> | <number> | <special> }
+// <special> ::= '-' | '[' | ']' | '\' | '`' | '^' | '{' | '}' | '|'
+// Nickname must be 1-9 characters
 bool pars_nick(std::string _nickname)
 {
-	if (isalpha_string(_nickname))
-		return true;
+	// Check length: must be 1-9 characters
+	if (_nickname.empty() || _nickname.length() > 9)
+		return false;
 
-	return false;
+	// First character must be letter or special (not digit)
+	char first = _nickname[0];
+	if (!isalpha(first) && first != '-' && first != '[' && first != ']' && 
+	    first != '\\' && first != '`' && first != '^' && first != '{' && 
+	    first != '}' && first != '|')
+		return false;
+
+	// Remaining characters can be letter, digit, or special
+	for (size_t i = 1; i < _nickname.length(); ++i)
+	{
+		char c = _nickname[i];
+		if (!isalnum(c) && c != '-' && c != '[' && c != ']' && 
+		    c != '\\' && c != '`' && c != '^' && c != '{' && 
+		    c != '}' && c != '|')
+			return false;
+	}
+
+	return true;
 }
 
 

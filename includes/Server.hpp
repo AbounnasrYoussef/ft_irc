@@ -31,7 +31,8 @@ class Channel;
 void ft_toupper(std::string &str);
 void sendError(int fd, const std::string &msg);
 bool isalpha_string(std::string str);
-
+// volatile sig_atomic_t g_running = 1;
+extern bool g_running ;
 class Server {
 	private:
 		int server_Fd;                    // Server socket fd
@@ -46,9 +47,9 @@ class Server {
 		std::map<std::string, Channel*> _channels;
 
 	public:
-		Server();
-		Server(const Server& other);
-		Server& operator=(const Server& other);
+		Server(){};
+		Server(const Server& other){(void)other;};
+		Server& operator=(const Server& other){(void)other;return *this;};
 		Server(int port, std::string password);
 		~Server();
 	
@@ -59,7 +60,7 @@ class Server {
 	void Quit();
 	// Core server functions
 	void start();					   // Main server loop
-	void setupSocket();				   // socket() + bind() + listen()
+	bool setupSocket();				   // socket() + bind() + listen()
 	void accept_NewClient();		   // accept() new connection
 	void handle_ClientData(int index); // Process client messages
 	// void removeClient(int index);     // Disconnect and cleanup
@@ -87,6 +88,7 @@ class Server {
 	void delete_channel(Channel *channel);
 	void handle_kick(int kicker_index, const std::string &argument);
 	void handle_mode(int setter_index, const std::string &argument);
+	void handle_quit(int index, std::string &argument);
 
 	// Otmane part join topic invet
 	void handel_Join(std::string &command, std::string &argument, int index);

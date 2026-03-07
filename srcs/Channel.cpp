@@ -51,7 +51,7 @@ void Channel::broadcast(const std::string &message, Client *exclude)
     for (std::set <Client*>::const_iterator it = _users.begin();it !=_users.end();++it)
     {
 		Client *client = *it;
-        if (client == exclude)
+        if (client || client == exclude)
         {
             continue;
         };
