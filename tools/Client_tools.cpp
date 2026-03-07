@@ -18,6 +18,7 @@ void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients
 	delete clients[index];
 	fds.erase(fds.begin() + index);
 	clients.erase(clients.begin() + index);
+	throw "Client removed"; // Throw an exception to break out of the calling loop
 }
 
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len) // i nedd learn from here this function

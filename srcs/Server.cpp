@@ -196,34 +196,32 @@ void Server::start()
 		if (ret == -1)
 		{
 			if (errno == EINTR)
-			{
 				continue; // Interrupted by signal, retry poll()
-			}
 			std::cerr << "Error: poll() failed: " << strerror(errno) << std::endl;
 			break; // Exit loop, destructor will clean up properly
 		}
-		if (ret > 0)
+		try
 		{
-			// There are events to process
-
-			// check for new connections
-			if (this->_fds[0].revents & POLLIN)
+			if (ret > 0)
 			{
-				accept_NewClient();
-			}
-			// check for client data
-			for (int i = 1; i < (int)this->_fds.size(); i++)
-			{
-				if (this->_fds[i].revents & POLLIN)
+				// check for new connections
+				if (this->_fds[0].revents & POLLIN)
+					accept_NewClient();
+				for (int i = 1; i < (int)this->_fds.size(); i++)
 				{
-					handle_ClientData(i);
-				}
-				else if (this->_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
-				{
-					removeClient(this->_fds, clients, i);
-					i--; // Adjust index after removal
+					if (this->_fds[i].revents & POLLIN)
+						handle_ClientData(i);
+					else if (this->_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
+					{
+						removeClient(this->_fds, clients, i);
+						i--; // Adjust index after removal
+					}
 				}
 			}
+		}
+		catch(const char* e)
+		{
+			std::cerr << e << '\n';
 		}
 	}
 }
