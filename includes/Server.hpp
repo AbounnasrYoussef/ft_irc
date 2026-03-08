@@ -3,36 +3,25 @@
 
 #include <iostream>
 #include <vector>
-// # define MAX_CLIENTS 10 
-
-#include <vector>
-#include <map>
 #include "Channel.hpp"
-#include <sys/socket.h>
 #include <unistd.h>
 #include <poll.h>
-
-// add for othmane
-
-// #include "Channel.hpp"
-// #include "Client.hpp"
-
+#include "fcntl.h"
 #include <stdlib.h>
 #include <netdb.h> // getnameinfo, NI_MAXHOST
 #include <map>
 #include <sys/socket.h> // sockaddr, sockaddr_storage
 #include <netinet/in.h> // sockaddr_in, sockaddr_in6
-#include "Channel.hpp"
 #include <arpa/inet.h> // AF_INET, AF_INET6
-#include "Channel.hpp"
 class Client;
 class Channel;
-// extern int g_num_fds;
+
 void ft_toupper(std::string &str);
 void sendError(int fd, const std::string &msg);
 bool isalpha_string(std::string str);
-// volatile sig_atomic_t g_running = 1;
+
 extern bool g_running ;
+
 class Server {
 	private:
 		int server_Fd;                    // Server socket fd
@@ -65,7 +54,7 @@ class Server {
 	void handle_ClientData(int index); // Process client messages
 	// void removeClient(int index);     // Disconnect and cleanup
 	int check_client_is_live(int index, std::string aragument);
-	void bot(std::string &message, std::string command, std::string argument, int index);
+	void bot(std::string command, std::string argument, int index);
 	// Message handling
 	// void processCommand(Client* client, std::string message);
 	// void broadcastToChannel(std::string channelName, std::string message, Client* sender);
@@ -88,7 +77,7 @@ class Server {
 	void delete_channel(Channel *channel);
 	void handle_kick(int kicker_index, const std::string &argument);
 	void handle_mode(int setter_index, const std::string &argument);
-	void handle_quit(int index, std::string &argument);
+	void handle_quit(int index);
 
 	// Otmane part join topic invet
 	void handel_Join(std::string &command, std::string &argument, int index);

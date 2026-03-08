@@ -7,18 +7,14 @@
 #include "Server.hpp"
 #include <set> // OTHMANE ADDTHIS FOR join
 #include <sstream> // for iss
-#include <string>
-#include "Channel.hpp"
-#include <sstream>
-#include <poll.h>      // Pour struct pollfd
-#include <unistd.h>    // Pour close()
 #include <netdb.h>
+
 class Channel;
-class Client;
+
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
 // bool massage_complet(std::string buffer);
 bool pars_nick(std::string _nickname);
-bool split(std::string &s, char delimiter, std::string &left, std::string &right);
+bool split(std::string &s, std::string &left, std::string &right);
 
 class Client {
 	private:

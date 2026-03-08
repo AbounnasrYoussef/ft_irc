@@ -29,7 +29,7 @@ void Server::handel_Join(std::string &command, std::string &argument, int index)
 
     std::string chanel;
     std::string key;
-    if (split(argument, ' ', chanel, key))
+    if (split(argument, chanel, key))
     {
         std::vector<std::string> all_chanel = split_chanel(chanel, ',');
         std::vector<std::string> all_key;

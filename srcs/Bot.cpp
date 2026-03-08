@@ -10,7 +10,6 @@ bool check_bot_command(const std::string& command)
 
 int Server::check_client_is_live(int index, std::string aragument)
 {
-	// for (size_t i = 1; i < g_num_fds; i++)
 	for (size_t i = 1; i < this->_fds.size(); i++)
 	{
 		if (this->clients[i]->getNickname() == aragument)
@@ -20,10 +19,9 @@ int Server::check_client_is_live(int index, std::string aragument)
 	return -1;
 }
 
-void Server::bot(std::string &message, std::string command, std::string argument, int index)
+void Server::bot(std::string command, std::string argument, int index)
 {
-	// command = strtoupper(command); // for test need change ft_toupper
-	// std::cout << ">>[" << command << "]" << std::endl;
+
 	if (command == "!HELP")
 	{
 		std::string msg;
@@ -50,13 +48,10 @@ void Server::bot(std::string &message, std::string command, std::string argument
 		msg += "  MODE  #chan <modes>           -> change channel modes\n";
 		msg += "\n";
 		msg += "Bot fun commands:\n";
-		msg += "  !GTA    [nick]  -> GTA wanted level (random ⭐)\n";
 		msg += "  !battle [nick]  -> random fight result\n";
 		msg += "\n";
 
 		sendError(this->_fds[index].fd, msg);
-
-			
 		return;
 	}
 	if (this->clients[index]->isPassOk() == false)
@@ -81,7 +76,6 @@ void Server::bot(std::string &message, std::string command, std::string argument
 	{
 		std::stringstream num_clients;
 		std::stringstream port;
-		// num_clients << (g_num_fds - 1); // excluding server fd
 		num_clients << (this->_fds.size() - 1);
 		port << this->port;
 
@@ -99,7 +93,7 @@ void Server::bot(std::string &message, std::string command, std::string argument
 		std::string description = "Friendly ft_irc bonus bot (fun + mini-games)";
 		std::string version     = "v1.0.0";
 		std::string language    = "C++98";
-		std::string features    = "!help  !wanted  !battle  !coin  !roll  !race"; // NEED UPDATE
+		std::string features    = "!help  !wanted  !battle  !coin  !roll  !race";
 		std::string developers  = "nbougrin, yabounna, oelbied";
 
 		std::string response;
@@ -140,8 +134,6 @@ void Server::bot(std::string &message, std::string command, std::string argument
 		}
 		if (client_index != -1)
 		{
-			// Randomly determine battle outcome
-
 			if (outcome == 0)
 				result = "You win! 🏆\n";
 			else if (outcome == 1)
@@ -153,28 +145,7 @@ void Server::bot(std::string &message, std::string command, std::string argument
 			return;
 		}
 	}
-	else if (command == "!GTA")
-	{
-		// GTA command implementation
-		// int client_index = check_client_is_live(index, argument);
-		int outcome = rand() % 3; // 0 = win, 1 = draw, 2 = lose
-		std::string result;
-
-		if (argument.empty())
-		{
-			if (outcome == 0)
-				result = "⭐⭐ lhnach 🚨 3la9\n";
-			else if (outcome == 1)
-				result = "⭐⭐⭐ hadchi khatir thala ajmil RUN 🏃 \n";
-			else
-				result = "⭐⭐⭐⭐⭐ L3AAAZWA 9ADIYA FIHA SWAT 🚁💥 \n";
-			sendError(this->_fds[index].fd, "Battle Result: " + result + "\n");
-		}
-		return;
-	}
 	else
-	{
 		sendError(this->_fds[index].fd, "ERROR: Unknown bot command \"" + command + "\". Type !HELP for a list of commands.\r\n");
-	}
 
 }

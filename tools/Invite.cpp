@@ -5,9 +5,10 @@
 
 void Server::handel_Invite(std::string &command, std::string &argument, int index)
 {
+	(void)command;
     std::string nickname;
     std::string channel;
-    if (split(argument, ' ', nickname, channel))
+    if (split(argument, nickname, channel))
     {
         if (nickname.empty() || channel.empty())
         {

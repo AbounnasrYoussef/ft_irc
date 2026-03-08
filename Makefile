@@ -2,7 +2,7 @@ NAME = ircserv
 
 CC = c++
 
-CFLAGS = #-g3 -fsanitize=address #-Wall -Wextra -Werror -std=c++98
+CFLAGS = -Wall -Wextra -Werror -std=c++98 #-g3 -fsanitize=address #
 
 # <<<<<<< HEAD
 # SRC = main.cpp srcs/Server.cpp srcs/Client.cpp tools/Client_tools.cpp tools/Server_tools.cpp \

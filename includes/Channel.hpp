@@ -2,13 +2,9 @@
 #define CHANNEL_HPP
 
 #include <iostream>
-
 #include <vector>
-#include <string>
-
+#include <unistd.h>
 #include <set>
-#include "Client.hpp"
-#include <string>
 
 class Client;
 
