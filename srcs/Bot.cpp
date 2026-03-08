@@ -3,8 +3,7 @@
 
 bool check_bot_command(const std::string& command)
 {
-	return (command == "!HELP" || command == "!TIME" || command == "!DATE" ||
-			command == "!USER" || command == "!SERVER" || command == "!ABOUT" ||
+	return (command == "!HELP" || command == "!USER" || command == "!SERVER" || command == "!ABOUT" ||
 			command == "!RULES" || command == "!BATTLE");
 }
 
@@ -18,13 +17,9 @@ int Server::check_client_is_live(int index, std::string aragument)
 	sendError(this->_fds[index].fd, "ERROR : No such this nick \"" + aragument + "\"\r\n");
 	return -1;
 }
-
-void Server::bot(std::string command, std::string argument, int index)
+void Server::help_command(int index)
 {
-
-	if (command == "!HELP")
-	{
-		std::string msg;
+	std::string msg;
 
 		msg += "=== ft_irc HELP ===\n";
 		msg += "To register (mandatory):\n";
@@ -53,7 +48,9 @@ void Server::bot(std::string command, std::string argument, int index)
 
 		sendError(this->_fds[index].fd, msg);
 		return;
-	}
+}
+void Server::bot(std::string command, std::string argument, int index)
+{
 	if (this->clients[index]->isPassOk() == false)
 	{
 		sendError(this->_fds[index].fd, "ERROR: You must be registered to use bot commands. Use PASS, NICK, and USER to register.\r\n");
@@ -81,9 +78,8 @@ void Server::bot(std::string command, std::string argument, int index)
 
 		std::string Server_Name = "🟧 Orange Pixel 🟧";
 		std::string clients_count = num_clients.str(); // excluding server fd
-		std::string channels_count = "N/A"; // Placeholder, implement channel tracking to get actual count
 		std::string port_number = port.str();
-		std::string response = "Server Info:\nServer Name: " + Server_Name + "\nConnected Clients: " + clients_count + "\nActive Channels: " + channels_count + "\nPort Number: " + port_number + "\n";
+		std::string response = "Server Info:\nServer Name: " + Server_Name + "\nConnected Clients: " + clients_count + "\n" + "\nPort Number: " + port_number + "\n";
 		sendError(this->_fds[index].fd, response + "\r\n");
 		return;
 	}
@@ -93,7 +89,7 @@ void Server::bot(std::string command, std::string argument, int index)
 		std::string description = "Friendly ft_irc bonus bot (fun + mini-games)";
 		std::string version     = "v1.0.0";
 		std::string language    = "C++98";
-		std::string features    = "!help  !wanted  !battle  !coin  !roll  !race";
+		std::string features    = "!help !battle";
 		std::string developers  = "nbougrin, yabounna, oelbied";
 
 		std::string response;

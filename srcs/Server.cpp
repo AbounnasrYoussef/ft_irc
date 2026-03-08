@@ -231,5 +231,5 @@ Client *Server::findClient(const std::string &nickname)
 			return client;
 		}
 	}
-	return nullptr;
+	return NULL;
 }

@@ -110,7 +110,6 @@ bool Server::check_authentication(std::string command, std::string argument, int
 
 		if (!user_parsing(argument, this->clients[index]))
 		{
-			std::cout << "User parsing failed for argument: [" << argument << "]\n";
 			sendError(this->clients[index]->get_fd(), "461 " + 
 				(this->clients[index]->getNickname().empty() ? "*" : this->clients[index]->getNickname()) + 
 				" USER :Not enough parameters\r\n");
@@ -131,7 +130,9 @@ void Server::processCommand(int index, std::string &message)
 	if (split(message, command, argument))
 	{
 		ft_toupper(command);
-		if (command == "PASS" || command == "NICK" || command == "USER")
+		if (command == "!HELP")
+			help_command(index);
+		else if (command == "PASS" || command == "NICK" || command == "USER")
 		{
 
 			if (command == "PASS")
@@ -192,6 +193,10 @@ void Server::processCommand(int index, std::string &message)
 			handle_mode(index, argument);
 		else if (command == "QUIT")
 			handle_quit(index);
+		else if (check_bot_command(command))
+			bot(command, argument, index);
+		 else
+			sendError(this->clients[index]->get_fd(), "421 " + command + " :Unknown command\r\n");
 	}
 }
 

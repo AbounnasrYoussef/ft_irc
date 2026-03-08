@@ -15,7 +15,7 @@
 #include <arpa/inet.h> // AF_INET, AF_INET6
 class Client;
 class Channel;
-
+bool check_bot_command(const std::string& command);
 void ft_toupper(std::string &str);
 void sendError(int fd, const std::string &msg);
 bool isalpha_string(std::string str);
@@ -87,6 +87,9 @@ class Server {
 	// ABOUT TOPEC
 	bool findChannel(const std::string &name);
 	Client *findClient(const std::string &nickname);
+	
+	// bot functions
+	void help_command(int index);
 };
 
 #endif
