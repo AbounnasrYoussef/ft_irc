@@ -1,32 +1,40 @@
-NAME = ircserv
+NAME=ircserv
 
-CC = c++
+BONUS_NAME = ircserv_bonus
 
-CFLAGS = -Wall -Wextra -Werror -std=c++98  -g3 -fsanitize=address
-CFLAGS = #-g3 -fsanitize=address #-Wall -Wextra -Werror -std=c++98
+CC=c++
+FLAGS= -Wall -Wextra -Werror -std=c++98
 
-# <<<<<<< HEAD
-# SRC = main.cpp srcs/Server.cpp srcs/Client.cpp tools/Client_tools.cpp tools/Server_tools.cpp \
-# 		srcs/Channel.cpp
-# =======
-SRC = main.cpp srcs/Server.cpp  srcs/Channel.cpp  srcs/Client.cpp tools/Client_tools.cpp tools/Server_tools.cpp tools/privmsg.cpp  tools/kick.cpp tools/mode.cpp \
-		tools/Join.cpp tools/Topic.cpp tools/Invite.cpp srcs/Bot.cpp 
-# >>>>>>> youssef
+SRC= Mandatory/main.cpp Mandatory/srcs/Server.cpp  Mandatory/srcs/Channel.cpp  Mandatory/srcs/Client.cpp Mandatory/tools/Client_tools.cpp Mandatory/tools/Server_tools.cpp Mandatory/tools/privmsg.cpp  Mandatory/tools/kick.cpp Mandatory/tools/mode.cpp \
+			Mandatory/tools/Join.cpp Mandatory/tools/Topic.cpp Mandatory/tools/Invite.cpp
 
-OBJ = $(SRC:.cpp=.o)
+Bonus_SRC= Bonus/main.cpp Bonus/srcs/Server.cpp  Bonus/srcs/Channel.cpp  Bonus/srcs/Client.cpp Bonus/tools/Client_tools.cpp Bonus/tools/Server_tools.cpp Bonus/tools/privmsg.cpp  Bonus/tools/kick.cpp Bonus/tools/mode.cpp \
+			Bonus/tools/Join.cpp Bonus/tools/Topic.cpp Bonus/tools/Invite.cpp Bonus/srcs/Bot.cpp 
+
+
+OBJ_SRC=$(SRC:.cpp=.o)
+BONUS_OBJ_SRC=$(Bonus_SRC:.cpp=.o)
+
+Mandatory/%.o: Mandatory/%.cpp Mandatory/includes/Channel.hpp Mandatory/includes/Client.hpp  Mandatory/includes/Server.hpp Mandatory/includes/Commands.hpp
+	$(CC) $(FLAGS) -c $< -o $@
+
+Bonus/%.o: Bonus/%.cpp Bonus/includes/Channel.hpp Bonus/includes/Client.hpp  Bonus/includes/Server.hpp Bonus/includes/Commands.hpp
+	$(CC) $(FLAGS) -c $< -o $@
 
 all: $(NAME)
 
-$(NAME): $(OBJ) 
-	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
+bonus: $(BONUS_NAME)
 
-%.o: %.cpp includes/Channel.hpp includes/Client.hpp  includes/Server.hpp 
-	$(CC) $(CFLAGS) -c $< -o $@
+$(NAME): $(OBJ_SRC)
+	$(CC) $(FLAGS) $(OBJ_SRC) -o $(NAME)
+
+$(BONUS_NAME): $(BONUS_OBJ_SRC)
+	$(CC) $(FLAGS) $(BONUS_OBJ_SRC) -o $(BONUS_NAME)
 
 clean:
-	rm -f $(OBJ)
+	rm -f $(OBJ_SRC) $(BONUS_OBJ_SRC)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(BONUS_NAME)
 
 re: fclean all
