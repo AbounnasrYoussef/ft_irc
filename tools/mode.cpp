@@ -5,7 +5,6 @@
 #include <sstream>
 #include <cstdlib>
 
-// Send current channel modes to a client
 static void send_channel_modes(Client *client, Channel *channel)
 {
     std::string modes = "+";
@@ -28,20 +27,6 @@ static void send_channel_modes(Client *client, Channel *channel)
     send(client->get_fd(), response.c_str(), response.length(), 0);
 }
 
-/*
-** Parse MODE argument.
-** Format: <channel> [+/-modes] [param1] [param2] ...
-**
-** Modes requiring a parameter:
-**   +o <nick>    — give operator status
-**   -o <nick>    — remove operator status
-**   +k <key>     — set channel key
-**   -k           — remove channel key (no parameter needed)
-**   +l <limit>   — set user limit
-**   -l           — remove user limit (no parameter needed)
-**
-** Modes without parameter: i, t, m, n
-*/
 static ParsedMode parse_mode_arguments(const std::string &argument)
 {
     ParsedMode result;
@@ -51,7 +36,6 @@ static ParsedMode parse_mode_arguments(const std::string &argument)
 
     if (space_pos == std::string::npos)
     {
-        // Only channel name — query mode
         result.channel = argument;
         trim(result.channel);
         result.valid = true;
@@ -69,8 +53,6 @@ static ParsedMode parse_mode_arguments(const std::string &argument)
         result.valid = true;
         return result;
     }
-
-    // Separate mode string from parameters
     size_t next_space = rest.find(' ');
     std::string mode_string;
     std::string params_string;
@@ -86,8 +68,6 @@ static ParsedMode parse_mode_arguments(const std::string &argument)
         params_string = rest.substr(next_space + 1);
         trim(params_string);
     }
-
-    // Split params_string into a list of tokens
     std::vector<std::string> params;
     {
         std::istringstream iss(params_string);
@@ -95,8 +75,6 @@ static ParsedMode parse_mode_arguments(const std::string &argument)
         while (iss >> token)
             params.push_back(token);
     }
-
-    // Parse mode characters and assign parameters
     bool adding = true;
     size_t param_idx = 0;
 
@@ -119,7 +97,6 @@ static ParsedMode parse_mode_arguments(const std::string &argument)
             change.adding = adding;
             change.param = "";
 
-            // Modes that require a parameter when adding (or for -o)
             if ((c == 'o' || (adding && (c == 'k' || c == 'l'))))
             {
                 if (param_idx < params.size())
@@ -141,7 +118,6 @@ void Server::handle_mode(int setter_index, const std::string &argument)
 {
     Client *setter = this->clients[setter_index];
 
-    // 1. Parse
     ParsedMode parsed = parse_mode_arguments(argument);
 
     if (!parsed.valid)
@@ -153,7 +129,6 @@ void Server::handle_mode(int setter_index, const std::string &argument)
         return;
     }
 
-    // 2. Find channel
     Channel *channel = this->get_channel(parsed.channel);
     if (!channel)
     {
@@ -166,15 +141,12 @@ void Server::handle_mode(int setter_index, const std::string &argument)
         return;
     }
 
-    // 3. If no modes — just display current modes
     if (parsed.changes.empty())
     {
         send_channel_modes(setter, channel);
         return;
     }
 
-    // 4. Setter must be in the channel
-    //    Use hasUser() — consistent with JOIN which uses addUser()/_users
     if (!channel->hasUser(setter))
     {
         std::string error = ":server 442 ";
@@ -186,7 +158,6 @@ void Server::handle_mode(int setter_index, const std::string &argument)
         return;
     }
 
-    // 5. Setter must be operator
     if (!channel->is_operator(setter))
     {
         std::string error = ":server 482 ";
@@ -198,7 +169,6 @@ void Server::handle_mode(int setter_index, const std::string &argument)
         return;
     }
 
-    // 6. Apply each mode change
     std::string applied_modes = "";
     std::string applied_params = "";
 
@@ -279,7 +249,6 @@ void Server::handle_mode(int setter_index, const std::string &argument)
             }
             else
             {
-                // -k removes the key
                 channel->setAkey("");
                 applied_modes += "-k";
             }
@@ -327,7 +296,6 @@ void Server::handle_mode(int setter_index, const std::string &argument)
         }
     }
 
-    // 7. Notify all channel members of the applied modes
     if (!applied_modes.empty())
     {
         std::string mode_msg = ":";
@@ -342,8 +310,6 @@ void Server::handle_mode(int setter_index, const std::string &argument)
         mode_msg += applied_modes;
         mode_msg += applied_params;
         mode_msg += "\r\n";
-
-        // broadcast to all members in _users (consistent with JOIN)
         channel->broadcast(mode_msg, NULL);
     }
 }

@@ -126,6 +126,7 @@ bool user_parsing(const std::string &argument, Client *client) // need learn for
 
 bool split(std::string &s, char delimiter, std::string &left, std::string &right)
 {
+	(void)delimiter;
     size_t pos_nl = s.find('\n'); // نبحث عن نهاية السطر أولاً
     std::string line;
 

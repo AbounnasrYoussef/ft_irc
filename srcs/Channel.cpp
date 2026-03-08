@@ -285,7 +285,6 @@ void Server::delete_channel(Channel *channel)
     delete channel;
 }
 
-//  function about topuk
 
 void Channel::addUserInvite(Client *Client)
 {

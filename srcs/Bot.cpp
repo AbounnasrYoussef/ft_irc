@@ -22,6 +22,7 @@ int Server::check_client_is_live(int index, std::string aragument)
 
 void Server::bot(std::string &message, std::string command, std::string argument, int index)
 {
+	(void)message;
 	// command = strtoupper(command); // for test need change ft_toupper
 	// std::cout << ">>[" << command << "]" << std::endl;
 	if (command == "!HELP")
