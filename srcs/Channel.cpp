@@ -41,7 +41,6 @@ void Channel::addUser(Client *client)
 
 bool Channel::hasUser(Client *Client) const
 {
-
     return (_users.find(Client) != _users.end());
 }
 void Channel::broadcast(const std::string &message, Client *exclude)
@@ -188,7 +187,7 @@ std::vector<Client *> Channel::get_members()
     return _members;
 }
 
-// Gestion des opérateurs
+
 void Channel::add_operator(Client *client)
 {
     if (!is_operator(client))
@@ -219,7 +218,6 @@ bool Channel::is_operator(Client *client)
     return false;
 }
 
-// Getters/Setters
 std::string Channel::get_name()
 {
     return _name;
@@ -291,4 +289,13 @@ void Channel::addUserInvite(Client *Client)
     if (!Client)
         return;
     _invet.insert(Client);
+}
+bool Channel::has_invite(Client* client) const {
+    return _invet.find(client) != _invet.end();
+}
+void Channel::removeInvite(Client* user)
+{
+    if (!user)
+        return; // حماية من nullptr
+    _invet.erase(user); // إزالة العميل من مجموعة الدعوات
 }

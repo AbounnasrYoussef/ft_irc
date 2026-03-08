@@ -217,19 +217,28 @@ bool Server::findChannel(const std::string &name)
 	else
 		return false;
 }
+// Client *Server::findClient(const std::string &nickname)
+// {
+// 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+// 	{
+// 		Client *client = it->second;
+// 		if (!client)
+// 		{
+// 			continue;
+// 		}
+// 		if (client->getNickname() == nickname)
+// 		{
+// 			return client;
+// 		}
+// 	}
+// 	return nullptr;
+// }
 Client *Server::findClient(const std::string &nickname)
 {
-	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		Client *client = it->second;
-		if (!client)
-		{
-			continue;
-		}
-		if (client->getNickname() == nickname)
-		{
-			return client;
-		}
-	}
-	return NULL;
+    for (size_t i = 0; i < clients.size(); i++)
+    {
+        if (clients[i] && clients[i]->getNickname() == nickname)
+            return clients[i];
+    }
+    return NULL;
 }

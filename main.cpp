@@ -15,7 +15,7 @@ void server_signal(int sig)
 	g_running = 0;
 	std::cout << "\nShutting down server..." << std::endl;
 }
-
+#include <cstring>
 void setup_server_signals()
 {
 	struct sigaction sa;

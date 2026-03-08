@@ -63,6 +63,8 @@ public:
     bool is_empty();
 
     // invet
+    bool has_invite(Client* client) const;
+    void removeInvite(Client* user);
     void addUserInvite(Client *Client);
     
     bool is_invite_only() const;
