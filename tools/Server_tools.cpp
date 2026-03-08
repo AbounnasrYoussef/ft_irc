@@ -208,17 +208,20 @@ void sendError(int fd, const std::string &msg)
 
 bool Server::isNicknameTaken(std::string nickname, int excludeIndex)
 {
-	for (int i = 1; i < (int)this->_fds.size(); i++)
-	{
-		if (this->clients[i] && i != excludeIndex && this->clients[i]->getNickname() == nickname) 
-			return true;
-	}
-	return false;
+    // for (int i = 1; i < g_num_fds; i++)
+    for (int i = 1; i < (int)this->_fds.size(); i++)
+    {
+        if (this->clients[i] && i != excludeIndex && this->clients[i]->getNickname() == nickname) 
+        {
+            return true;  // Found a match in another client!
+        }
+    }
+    return false;  // Not taken
 }
 
 int Server::getServerFd()
 {
-	return this->server_Fd;
+    return this->server_Fd;
 }
 
 
@@ -265,13 +268,13 @@ void Server::Quit()
 
 void ft_toupper(std::string &str)
 {
-	size_t i = 0;
-	size_t len = str.length();
-	
-	while (i < len)
-	{
-		str[i] = std::toupper(str[i]);
-		i++;
-	}
+    size_t i = 0;
+    size_t len = str.length();
+    
+    while (i < len)
+    {
+        str[i] = std::toupper(str[i]);
+        i++;
+    }
 
 }

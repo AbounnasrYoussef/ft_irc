@@ -47,12 +47,6 @@ void trim(std::string &s)
         s = s.substr(start, end - start + 1);
 }
 
-/*
-** Parsing PRIVMSG argument.
-** Formats accepted:
-**   PRIVMSG <target> :<message>   (standard IRC)
-**   PRIVMSG <target> <message>    (without colon — tolerated)
-*/
 ParsedMessage parse_arguments(const std::string &argument)
 {
     ParsedMessage result;
@@ -64,13 +58,10 @@ ParsedMessage parse_arguments(const std::string &argument)
         result.error_code = 411;
         return result;
     }
-
-    // Find first space separating target from message
     size_t space_pos = argument.find(' ');
 
     if (space_pos == std::string::npos)
     {
-        // Only a target, no message
         result.error_code = 412;
         return result;
     }
@@ -91,8 +82,6 @@ ParsedMessage parse_arguments(const std::string &argument)
         result.error_code = 412;
         return result;
     }
-
-    // Strip leading ':' if present (standard IRC format)
     if (rest[0] == ':')
         result.message = rest.substr(1);
     else
@@ -122,8 +111,6 @@ static void send_to_channel(Server *server, Client *sender, const std::string &t
         sendError(sender->get_fd(), error);
         return;
     }
-
-    // Sender must be in the channel
     if (!channel->hasUser(sender))
     {
         std::string error = ":server 404 ";
@@ -134,8 +121,6 @@ static void send_to_channel(Server *server, Client *sender, const std::string &t
         sendError(sender->get_fd(), error);
         return;
     }
-
-    // Broadcast to all channel members except sender
     std::string formatted = format_privmsg(sender, target_name, message);
     channel->broadcast(formatted, sender);
 }

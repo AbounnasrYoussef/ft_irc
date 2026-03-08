@@ -20,11 +20,11 @@ private:
     std::string _key;
 
     bool hasAkey;
-    bool _invite_only;     // Mode +i
-    bool _topic_protected; // Mode +t
-    bool _moderated;       // Mode +m
-    bool _no_external;     // Mode +n
-    int _user_limit;       // Mode +l (0 = pas de limite)
+    bool _invite_only;
+    bool _topic_protected;
+    bool _moderated;
+    bool _no_external;
+    int _user_limit;
 
 public:
     Channel();
@@ -64,7 +64,7 @@ public:
 
     // invet
     void addUserInvite(Client *Client);
-    // mode
+    
     bool is_invite_only() const;
     bool is_topic_protected() const;
     bool is_moderated() const;

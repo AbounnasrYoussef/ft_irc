@@ -23,7 +23,7 @@ void Server::handel_Join(std::string &command, std::string &argument, int index)
 {
     if (argument.empty())
     {
-        sendError(this->clients[index]->get_fd(), "461 " + command + " Not enough parameters\r\n");
+        sendError(this->clients[index]->get_fd(), "461 ERR_NEEDMOREPARAMS" + command + " Not enough parameters\r\n");
         return;
     }
 
@@ -42,22 +42,22 @@ void Server::handel_Join(std::string &command, std::string &argument, int index)
 
             if (chanName.empty())
             {
-                sendError(this->clients[index]->get_fd(), "461 " + chanName + " Not enough parameters\r\n");
+                sendError(this->clients[index]->get_fd(), "461 ERR_NEEDMOREPARAMS" + chanName + " Not enough parameters\r\n");
                 continue;
             }
             if (chanName[0] != '#' && chanName[0] != '&')
             {
-                sendError(this->clients[index]->get_fd(), "476 " + chanName + " Bad Channel Mask\r\n");
+                sendError(this->clients[index]->get_fd(), "476  ERR_YOUWILLBEBANNED" + chanName + " Bad Channel Mask\r\n");
                 continue;
             }
             if (chanName.size() < 2 || chanName.size() > 50)
             {
-                sendError(this->clients[index]->get_fd(), "476 " + this->clients[index]->getNickname() + " " + chanName + " Bad Channel Mask\r\n");
+                sendError(this->clients[index]->get_fd(), "476  ERR_YOUWILLBEBANNED" + this->clients[index]->getNickname() + " " + chanName + " Bad Channel Mask\r\n");
                 continue;
             }
             if (chanName.find(' ') != std::string::npos || chanName.find(',') != std::string::npos || chanName.find('\7') != std::string::npos)
             {
-                sendError(this->clients[index]->get_fd(), "476 " + chanName + " Bad Channel Mask\r\n");
+                sendError(this->clients[index]->get_fd(), "476  ERR_YOUWILLBEBANNED" + chanName + " Bad Channel Mask\r\n");
                 continue;
             }
 

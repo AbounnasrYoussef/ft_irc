@@ -78,7 +78,6 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
 {
     Client *kicker = this->clients[kicker_index];
 
-    // 1. Parse arguments
     ParsedKick parsed = parse_kick_arguments(argument);
 
     if (!parsed.valid)
@@ -90,7 +89,6 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
         return;
     }
 
-    // 2. Check channel exists
     Channel *channel = this->get_channel(parsed.channel);
     if (!channel)
     {
@@ -103,7 +101,6 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
         return;
     }
 
-    // 3. Kicker must be in the channel (_users, set by addUser in JOIN)
     if (!channel->hasUser(kicker))
     {
         std::string error = ":server 442 ";
@@ -115,7 +112,6 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
         return;
     }
 
-    // 4. Kicker must be operator (_operators, set by add_operator in JOIN)
     if (!channel->is_operator(kicker))
     {
         std::string error = ":server 482 ";
@@ -127,7 +123,6 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
         return;
     }
 
-    // 5. Find target and verify they are in the channel
     Client *target = this->get_client_by_nickname(parsed.target_nick);
     if (!target || !channel->hasUser(target))
     {
@@ -142,16 +137,13 @@ void Server::handle_kick(int kicker_index, const std::string &argument)
         return;
     }
 
-    // 6. Send KICK message to ALL members including the target before removing
     std::string kick_msg = format_kick(kicker, parsed.channel,
                                        parsed.target_nick, parsed.reason);
     channel->broadcast(kick_msg, NULL);
 
-    // 7. Remove target from _members and _operators
     channel->remove_member(target);
     channel->remove_operator(target);
 
-    // 8. Delete channel if now empty (_members is synced via add_member in JOIN)
     if (channel->is_empty())
         this->delete_channel(channel);
 
