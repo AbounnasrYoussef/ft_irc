@@ -5,26 +5,26 @@
 
 struct ParsedMessage
 {
-    std::string target;  // destinataire
-    std::string message; // le message
-    bool valid;          // succès du parsing
-    int error_code;      // code d'erreur si !valid
+    std::string target;
+    std::string message;
+    bool valid;
+    int error_code;
 };
 
 struct ParsedKick
 {
     std::string channel;
     std::string target_nick;
-    std::string reason; // Optionnel
+    std::string reason;
     bool valid;
     int error_code;
     std::string error_msg;
 };
 struct ModeChange
 {
-    char mode;         // 'i', 't', 'o', 'k', 'l', etc.
-    bool adding;       // true = +, false = -
-    std::string param; // Pour +o, +k, +l
+    char mode;
+    bool adding;
+    std::string param;
 };
 
 struct ParsedMode
