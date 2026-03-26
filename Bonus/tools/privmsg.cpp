@@ -8,6 +8,7 @@ std::string format_privmsg(Client *sender, const std::string &target, const std:
     std::string result = ":";
     result += sender->getNickname();
     result += "!";
+    result += "~";
     result += sender->getUsername();
     result += "@";
     result += sender->getIP();
@@ -16,6 +17,7 @@ std::string format_privmsg(Client *sender, const std::string &target, const std:
     result += " :";
     result += message;
     result += "\r\n";
+
     return result;
 }
 

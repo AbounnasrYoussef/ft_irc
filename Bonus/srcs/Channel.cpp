@@ -1,9 +1,9 @@
 #include "../includes/Channel.hpp"
 #include "../includes/Client.hpp"
 
-#include <unistd.h>
-
 class Channel;
+
+Channel::Channel(){};
 Channel::Channel(const std::string &name) : _name(name), _topic(""), _key(""), hasAkey(false)
 {
     _invite_only = false;
@@ -26,20 +26,6 @@ void Channel::addUser(Client *client)
     _users.insert(client);
     client->addChannel(this);
 }
-
-// void Channel::removeUser(Client *client)
-// {
-// 	if(!client)
-// 		{
-// 			return;
-// 		}
-// 		auto it = _users.find(client);
-// 		if(it != _users.end())
-// 		{
-// 			_users.erase(it);
-// 			client->removeChannel(this);
-// 		}
-// }
 
 bool Channel::hasUser(Client *Client) const
 {
@@ -74,23 +60,7 @@ bool Channel::checkAkey(const std::string &key) const
 {
     return (key == _key);
 }
-// const std::string& Channel::getName() const {
-// 	return _name;
-// }
-// const std::set<Client*>& Channel::getUsers() const
-// {
-// return _users;
-// }
-// #include "../includes/Channel.hpp"
 
-// Channel::Channel(const std::string& name)
-// 	: _name(name)
-// {
-// }
-
-// Channel::~Channel()
-// {
-// }
 std::string Channel::getuserList()
 {
     std::string list;
@@ -102,20 +72,6 @@ std::string Channel::getuserList()
     }
     return list;
 }
-// #include "../includes/Server.hpp"
-
-// Channel::Channel(const std::string& name) : _name(name), _key("")
-// {
-//     _invite_only = false;
-//     _topic_protected = false;
-//     _moderated = false;
-//     _no_external = false;
-//     _user_limit = 0;
-// }
-
-// Channel::Channel(const std::string& name) : _name(name), _topic(""), _key("")
-// {
-// }
 
 Channel::Channel(const Channel &other)
 {
@@ -298,6 +254,6 @@ bool Channel::has_invite(Client* client) const {
 void Channel::removeInvite(Client* user)
 {
     if (!user)
-        return; // حماية من nullptr
-    _invet.erase(user); // إزالة العميل من مجموعة الدعوات
+        return;
+    _invet.erase(user);
 }

@@ -7,18 +7,14 @@
 #include "Server.hpp"
 #include <set> // OTHMANE ADDTHIS FOR join
 #include <sstream> // for iss
-#include <string>
-#include "Channel.hpp"
-#include <sstream>
-#include <poll.h>      // Pour struct pollfd
-#include <unistd.h>    // Pour close()
 #include <netdb.h>
+
 class Channel;
-class Client;
+
 std::string getClientIP(const sockaddr_storage &addr, socklen_t len);
 // bool massage_complet(std::string buffer);
 bool pars_nick(std::string _nickname);
-bool split(std::string &s, char delimiter, std::string &left, std::string &right);
+bool split(std::string &s, std::string &left, std::string &right);
 
 class Client {
 	private:
@@ -35,6 +31,9 @@ class Client {
 		// bool _registered;           // Fully registered? (PASS + NICK + USER) // no need
 		
 	public:
+		Client();
+		Client(const Client& other);
+		Client& operator=(const Client& other);
 		Client(int fd);
 		~Client();
 		std::string _password;            // Password
@@ -59,22 +58,12 @@ class Client {
 		bool isWelcomeSent() const;
 		void setWelcomeSent(bool sent);
 		void setUserSet(bool set); // NEW - mark USER as sent
-		// void setRegistered(bool reg); no need
 		// Buffer management
 		void appendBuffer(std::string const data);
 		void clearBuffer();
 		void setBuffer(std::string const data);
-		// bool isNicknameTaken(std::string nickname);
-		// for join 
-		// Client(const std::string& nick,const std::string& user);
 		void addChannel(Channel *Channel);
 		std::string get_prefix() const;
-		// void removeChannel(Channel *Channel);
-		// bool isInChannel(const std::string& channelName)const;
-
-		// const std::string& getNickname() const;
-		// const std::string& getUsername() const; 
-		// const std::set<Channel*> getChannels() const;
 		
 };
 void removeClient(std::vector<struct pollfd>& fds, std::vector<Client*>& clients, int index);

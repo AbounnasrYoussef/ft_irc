@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/goinfre/oelbied/ft_irc",
-      "program": "/goinfre/oelbied/ft_irc/build/Debug/outDebug"
+      "cwd": "/home/yabounna/Desktop/ft_irc",
+      "program": "/home/yabounna/Desktop/ft_irc/build/Debug/outDebug"
     }
   ]
 }

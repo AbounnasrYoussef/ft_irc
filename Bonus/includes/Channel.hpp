@@ -1,0 +1,82 @@
+#ifndef CHANNEL_HPP
+#define CHANNEL_HPP
+
+#include <iostream>
+#include <vector>
+#include <unistd.h>
+#include <set>
+
+class Client;
+
+class Channel
+{
+	private:
+		std::string _name;
+		std::vector<Client *> _members;
+		std::vector<Client *> _operators;
+		std::set<Client *> _users;
+		std::set<Client *> _invet;
+		std::string _topic;
+		std::string _key;
+
+		bool hasAkey;
+		bool _invite_only;
+		bool _topic_protected;
+		bool _moderated;
+		bool _no_external;
+		int _user_limit;
+
+	public:
+		Channel();
+		Channel(const std::string &name);
+		Channel(const Channel &other);
+		Channel& operator=(const Channel &other);
+		~Channel();
+		// add for join comend
+		void addUser(Client *client);
+		bool hasUser(Client *Client) const;
+		std::string getuserList();
+
+		void broadcast(const std::string &message, Client *exclude);
+		void setAkey(const std::string &key);
+		const std::string &getkey() const;
+		bool hasAkeys() const;
+		bool checkAkey(const std::string &key) const;
+
+		// about topuck
+		void add_member(Client *client);
+		void remove_member(Client *client);
+		bool has_member(Client *client);
+		std::vector<Client *> get_members();
+
+		void add_operator(Client *client);
+		void remove_operator(Client *client);
+		bool is_operator(Client *client);
+
+		std::string get_name();
+		std::string get_topic();
+		void set_topic(std::string topic);
+
+		bool is_empty();
+
+		// invet
+		bool has_invite(Client* client) const;
+		void removeInvite(Client* user);
+		void addUserInvite(Client *Client);
+		
+		bool is_invite_only() const;
+		bool is_topic_protected() const;
+		bool is_moderated() const;
+		bool is_no_external() const;
+		int get_user_limit() const;
+
+		void set_invite_only(bool value);
+		void set_topic_protected(bool value);
+		void set_moderated(bool value);
+		void set_no_external(bool value);
+		void set_user_limit(int limit);
+
+};
+
+#endif
+

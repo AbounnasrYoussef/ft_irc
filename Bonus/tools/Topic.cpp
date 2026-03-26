@@ -13,7 +13,7 @@ void Server::handel_Topic(std::string &command, std::string &argument, int index
     std::string channel;
     std::string opject;
     // std::string new_topec;
-    bool has_topeck = split(argument, ' ', channel, opject);
+    bool has_topeck = split(argument, channel, opject);
 
     if (!this->findChannel(channel))
     {
